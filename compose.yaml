@@ -1,0 +1,35 @@
+# Containerized ESPHome toolchain: ESP32 builds and the SDL simulator.
+#
+#   docker compose build
+#   docker compose run --rm esphome compile devices/<device>.yaml
+#   docker compose run --rm --service-ports esphome run devices/<device>-sim.yaml
+#
+# The simulator window is shown through WSLg (Windows 11 + Docker Desktop). On other
+# hosts, point WSLG_DIR at a directory containing an X11 socket in .X11-unix/, or run
+# ESPHome natively instead.
+
+services:
+  esphome:
+    build:
+      context: .
+      dockerfile: tools/docker/Dockerfile
+    image: orbita-esphome:dev
+    working_dir: /config
+    stdin_open: true
+    tty: true
+    environment:
+      DISPLAY: ":0"
+      WAYLAND_DISPLAY: wayland-0
+      XDG_RUNTIME_DIR: /mnt/wslg/runtime-dir
+      PULSE_SERVER: /mnt/wslg/PulseServer
+    volumes:
+      - .:/config
+      - cache:/cache
+      - ${WSLG_DIR:-/run/desktop/mnt/host/wslg}/.X11-unix:/tmp/.X11-unix
+      - ${WSLG_DIR:-/run/desktop/mnt/host/wslg}:/mnt/wslg
+    ports:
+      # Native API of the simulator, so Home Assistant can add it by this PC's IP.
+      - "6053:6053"
+
+volumes:
+  cache:

@@ -29,8 +29,28 @@ More boards later.
 ## Requirements
 
 - ESPHome — the exact version is pinned in [`.esphome-version`](.esphome-version)
+- Either **Docker** (recommended, any OS) or a native Python install
   (`pip install -r requirements.txt`)
-- For the simulator: Linux or macOS with SDL2 development libraries (Windows via WSL2)
+- For the simulator: Docker Desktop on Windows 11 (window shown through WSLg), or Linux/macOS
+  with SDL2 development libraries
+
+## Building with Docker
+
+The image in [`tools/docker/`](tools/docker/Dockerfile) contains ESPHome, the SDL2 libraries and
+a C++ toolchain. Build output and toolchains are kept in Docker volumes, not in the repo.
+
+```sh
+docker compose build                                    # once, and after a version bump
+
+docker compose run --rm esphome compile devices/<device>.yaml          # ESP32 firmware
+docker compose run --rm esphome upload --device <ip> devices/<device>.yaml    # OTA
+docker compose run --rm --service-ports esphome run devices/<device>-sim.yaml # simulator
+```
+
+`--service-ports` publishes the simulator's API port (6053), so Home Assistant can add it by
+this PC's IP address. Docker Desktop on Windows can't reach USB serial ports: do the first USB
+flash with a native install (`esphome upload --device COM3 <file>`) or the ESPHome web flasher,
+then update over the network.
 
 ## Repository layout
 

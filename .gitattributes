@@ -1,4 +1,4 @@
-# Normalize line endings: the repo is edited on Windows and built in WSL/Linux.
+# Normalize line endings: the repo is edited on Windows and built in Linux (Docker).
 * text=auto eol=lf
 
 *.png  binary
