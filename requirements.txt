@@ -1,0 +1,2 @@
+# Keep in sync with .esphome-version
+esphome==2026.10.2

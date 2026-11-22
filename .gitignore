@@ -1,0 +1,59 @@
+# --- Private docs -------------------------------------------------------------
+# docs/ is tracked in its own private repository (see docs/CLAUDE.md).
+# Never commit it here.
+/docs/
+# Root CLAUDE.md only imports @docs/CLAUDE.md; keep it private too.
+/CLAUDE.md
+
+# --- Secrets ------------------------------------------------------------------
+# API keys, OTA passwords, WiFi credentials, initial lock code (09-dev-workflow.md).
+secrets.yaml
+**/secrets.yaml
+
+# --- Personal device files ----------------------------------------------------
+# Real devices contain room names and entity ids: only examples are public.
+/devices/*
+!/devices/example*.yaml
+!/devices/secrets.example.yaml
+.env
+.env.*
+
+# --- ESPHome / PlatformIO build output ----------------------------------------
+.esphome/
+**/.esphome/
+.pioenvs/
+.piolibdeps/
+.pio/
+/build/
+
+# --- Fonts with restrictive licenses (downloaded at build time, 08-i18n) ------
+# e.g. Hugeicons free TTF must not be redistributed.
+fonts/.cache/
+*.hugeicons.ttf
+
+# --- Python tooling (tools/*.py) ----------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- C++ host unit tests / native builds --------------------------------------
+cmake-build-*/
+*.o
+*.a
+*.out
+
+# --- Editors / OS -------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Claude Code local settings -----------------------------------------------
+.claude/settings.local.json

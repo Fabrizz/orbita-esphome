@@ -1,0 +1,10 @@
+{
+  "name": "orbita-esphome-website",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Public website: user guide and blog. Docs framework not chosen yet.",
+  "license": "MIT",
+  "scripts": {
+    "build": "echo \"No docs framework chosen yet\" && exit 1"
+  }
+}

@@ -1,0 +1,23 @@
+# Paths are relative to website/.
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output (framework not chosen yet: covers Docusaurus, Astro, VitePress)
+/build/
+/dist/
+/.docusaurus/
+/.astro/
+/.vitepress/cache/
+/.vitepress/dist/
+
+# Local env
+.env
+.env.*
+!.env.example
