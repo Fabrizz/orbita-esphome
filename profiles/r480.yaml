@@ -59,3 +59,20 @@ font:
     bpp: 4
     glyphsets: ["${i18n_glyphset}"]
     ignore_missing_glyphs: true   # e.g. combining marks some fonts lack
+  # Icons: the device's icon pack (`icon_font`, `icon_glyphs`, icons/<pack>.yaml)
+  # at the profile's icon sizes. Faces use them with `${ic_<name>}` text.
+  - id: f_ic_s
+    file: ${icon_font}
+    size: ${icon_s}
+    bpp: 4
+    glyphs: "${icon_glyphs}"
+  - id: f_ic_m
+    file: ${icon_font}
+    size: ${icon_m}
+    bpp: 4
+    glyphs: "${icon_glyphs}"
+  - id: f_ic_l
+    file: ${icon_font}
+    size: ${icon_l}
+    bpp: 4
+    glyphs: "${icon_glyphs}"

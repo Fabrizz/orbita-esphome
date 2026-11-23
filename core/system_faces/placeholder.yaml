@@ -1,5 +1,5 @@
-# Temporary start screen: shows the theme and every profile font on the round
-# display. Replaced by the HOME face.
+# Temporary start screen: shows the theme, every profile font and a few icons
+# on the round display. Replaced by the HOME face.
 
 lvgl:
   pages:
@@ -51,3 +51,29 @@ lvgl:
                   text: "${t_placeholder_hint}"
                   text_font: f_s
                   styles: st_text_dim
+              - obj:
+                  width: SIZE_CONTENT
+                  height: SIZE_CONTENT
+                  bg_opa: transp
+                  border_width: 0
+                  pad_all: 0
+                  scrollable: false
+                  clickable: false
+                  layout:
+                    type: flex
+                    pad_column: ${sp_m}
+                    flex_flow: row
+                    flex_align_cross: center
+                  widgets:
+                    - label:
+                        text: "${ic_wifi}"
+                        text_font: f_ic_s
+                        styles: st_text_dim
+                    - label:
+                        text: "${ic_home_assistant}"
+                        text_font: f_ic_m
+                        styles: st_accent
+                    - label:
+                        text: "${ic_light}"
+                        text_font: f_ic_l
+                        styles: st_text

@@ -48,6 +48,7 @@ cmake-build-*/
 # --- Editors / OS -------------------------------------------------------------
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.swp
 .DS_Store

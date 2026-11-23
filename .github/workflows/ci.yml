@@ -24,10 +24,12 @@ jobs:
           python-version: "3.12"
       - name: ESPHome version pin
         run: python3 tools/check_version_pin.py
+      - name: Install the asset tools
+        run: python3 -m pip install --quiet "$(grep -i '^fonttools==' requirements.txt)" pyyaml
       - name: Logo font matches the brand SVGs
-        run: |
-          python3 -m pip install --quiet "$(grep -i '^fonttools==' requirements.txt)"
-          python3 tools/build_logo_font.py --check
+        run: python3 tools/build_logo_font.py --check
+      - name: Icon packs are up to date and icon uses are valid
+        run: python3 tools/build_icons.py --check
 
   build:
     name: Build

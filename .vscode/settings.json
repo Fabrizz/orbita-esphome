@@ -1,0 +1,14 @@
+{
+    "git.addAICoAuthor": "off",
+
+    // Generated files: change their sources and run the tool instead.
+    //   icons/<pack>.yaml      <- icons/semantic.yaml + icons/sources/   (tools/build_icons.py)
+    //   fonts/orbita-mark.ttf  <- brand/orbita-mark-section-*.svg        (tools/build_logo_font.py)
+    "files.readonlyInclude": {
+        "icons/*.yaml": true,
+        "fonts/orbita-mark.ttf": true
+    },
+    "files.readonlyExclude": {
+        "icons/semantic.yaml": true
+    }
+}

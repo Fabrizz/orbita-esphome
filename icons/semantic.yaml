@@ -1,0 +1,41 @@
+# Semantic icon names: the only icon names faces use, as ${ic_<name>}.
+#
+# Every icon pack in icons/sources/ maps each name here to one of its own
+# icons, so switching packs never touches a face. After editing this file or a
+# pack, regenerate the pack packages (icons/<pack>.yaml):
+#
+#   docker compose run --rm --entrypoint python esphome tools/build_icons.py
+#
+# To see every icon of every pack, render icons/previews/<pack>.png:
+#
+#   docker compose run --rm --entrypoint python esphome tools/preview_icons.py
+#
+# Format: `name: what the icon means`. Names are snake_case.
+
+# Connection
+wifi: Connected to WiFi, or joining it
+wifi_off: No WiFi
+wifi_alert: Can't join the WiFi network
+home_assistant: Home Assistant
+key_alert: Encryption key doesn't match
+sync: Syncing with Home Assistant
+forbidden: Action not allowed
+disconnected: Connection lost
+
+# System
+home: The HOME face
+info: Device information
+settings: Settings
+check: Done, success
+alert: Warning
+error: Error
+restart: Restart
+update: Firmware update in progress
+lock: Locked
+lock_open: Unlocked
+brightness: Screen brightness
+
+# Devices
+light: Light on
+light_off: Light off
+power: Power on/off

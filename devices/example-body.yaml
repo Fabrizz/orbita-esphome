@@ -9,4 +9,5 @@ substitutions:
 packages:
   lang: !include ../i18n/en.yaml
   theme: !include ../themes/dark.yaml
+  icons: !include ../icons/mdi.yaml
   core: !include ../core/all.yaml

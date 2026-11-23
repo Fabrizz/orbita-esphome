@@ -20,4 +20,5 @@ packages:
       - boards/host-sdl-r480.yaml
       - i18n/en.yaml
       - themes/dark.yaml
+      - icons/mdi.yaml
       - core/all.yaml
