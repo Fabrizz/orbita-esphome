@@ -1,0 +1,11 @@
+# Example device on the PC simulator, 480 px round display.
+#
+#   docker compose run --rm --service-ports esphome run devices/example-sim-r480.yaml
+
+substitutions:
+  device_name: knob-example-r480
+  friendly_name: Example knob (sim 480)
+
+packages:
+  board: !include ../boards/host-sdl-r480.yaml
+  body: !include example-body.yaml

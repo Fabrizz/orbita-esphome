@@ -1,0 +1,52 @@
+# Default theme: black background, warm amber accent.
+#
+# A theme is tokens only (colors, font families, opacity); core/styles.yaml
+# builds the LVGL styles from them and profiles own every size. A device file
+# can override any token, e.g. `c_accent: "0x40A0FF"`.
+#
+# Panels use 16-bit color (RGB565): keep grays at multiples of 8 (0x18, 0x28…)
+# or they pick up a green tint.
+
+substitutions:
+  theme_name: dark
+
+  # Font families: Google Fonts (gfonts://Family@weight), a local .ttf/.otf
+  # path relative to the device file, or a URL.
+  font_text: "gfonts://Inter@500"
+  font_num: "gfonts://Inter@600"
+
+  # Surfaces
+  c_bg: "0x000000"
+  c_surface: "0x181818"
+  c_surface_hi: "0x303030"
+  c_surface_border: "0x181818"   # same as c_surface: filled look, no outline
+  surface_opa: cover
+
+  # Text
+  c_text: "0xF0F0F0"
+  c_text_dim: "0x989898"
+  c_text_off: "0x585858"
+
+  # Accent
+  c_accent: "0xFFB000"
+  c_on_accent: "0x000000"
+
+  # Controls
+  c_track: "0x282828"
+  c_indicator: ${c_accent}
+
+  # Status
+  c_ok: "0x3DD68C"
+  c_warn: "0xFFD23F"
+  c_error: "0xFF5A4F"
+  c_unavailable: "0x585858"
+
+  # Device states
+  c_heat: "0xFF7A33"
+  c_cool: "0x4DA3FF"
+  c_idle: "0x989898"
+
+  # Navigation dots
+  c_nav_dot: "0x585858"
+  c_nav_current: ${c_accent}
+  c_nav_home: "0xF0F0F0"

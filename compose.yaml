@@ -25,6 +25,8 @@ services:
     volumes:
       - .:/config
       - cache:/cache
+      # Simulator snapshots (F12 / snapshot.take) land in build/snapshots/<device>/.
+      - ./build/snapshots:/cache/esphome/snapshots
       - ${WSLG_DIR:-/run/desktop/mnt/host/wslg}/.X11-unix:/tmp/.X11-unix
       - ${WSLG_DIR:-/run/desktop/mnt/host/wslg}:/mnt/wslg
     ports:

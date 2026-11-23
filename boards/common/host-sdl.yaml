@@ -1,0 +1,92 @@
+# PC simulator (ESPHome `host` platform + SDL window). Shared by the
+# host-sdl-r* boards, which select the size profile and the round mask size.
+#
+# Input:
+#   Mouse          touchscreen
+#   Left / Right   knob turn (one detent per key press)
+#   Space          knob button
+#   F12            save a snapshot of the screen
+
+substitutions:
+  has_knob: "true"
+  has_touch: "true"
+  has_psram: "true"
+  motion_default: full
+
+packages:
+  net: !include ../../core/net/host.yaml
+
+host:
+
+display:
+  - platform: sdl
+    id: disp
+    update_interval: never
+    auto_clear_enabled: false
+    dimensions:
+      width: ${disp_d}
+      height: ${disp_d}
+    snapshot_key: SDLK_F12
+
+touchscreen:
+  - platform: sdl
+    id: touch
+
+binary_sensor:
+  - platform: sdl
+    id: sim_knob_ccw
+    key: SDLK_LEFT
+    internal: true
+    on_press:
+      - lambda: id(shell).knob_delta(-1);
+  - platform: sdl
+    id: sim_knob_cw
+    key: SDLK_RIGHT
+    internal: true
+    on_press:
+      - lambda: id(shell).knob_delta(1);
+  - platform: sdl
+    id: sim_knob_button
+    key: SDLK_SPACE
+    internal: true
+    on_press:
+      - lambda: id(shell).knob_button(true);
+    on_release:
+      - lambda: id(shell).knob_button(false);
+
+# No real backlight on a PC: a light that only logs its level keeps the board
+# contract (`backlight`) the same as on hardware.
+output:
+  - platform: template
+    id: sim_backlight_out
+    type: float
+    write_action:
+      - logger.log:
+          format: "Backlight %.0f%%"
+          args: ["state * 100.0f"]
+          level: DEBUG
+
+light:
+  - platform: monochromatic
+    id: backlight
+    output: sim_backlight_out
+    restore_mode: ALWAYS_ON
+    internal: true
+
+# The SDL window is square: a black ring on the top layer hides the corners,
+# like the round glass of the real panels.
+lvgl:
+  top_layer:
+    scrollable: false
+    widgets:
+      - obj:
+          id: sim_round_mask
+          align: center
+          width: ${sim_mask_size}
+          height: ${sim_mask_size}
+          radius: CIRCLE
+          bg_opa: transp
+          border_color: 0x000000
+          border_width: ${sim_mask_border}
+          clickable: false
+          scrollable: false

@@ -52,6 +52,21 @@ this PC's IP address. Docker Desktop on Windows can't reach USB serial ports: do
 flash with a native install (`esphome upload --device COM3 <file>`) or the ESPHome web flasher,
 then update over the network.
 
+## Simulator
+
+```sh
+cp devices/secrets.example.yaml devices/secrets.yaml   # once; fill in the API key
+docker compose run --rm --service-ports esphome run devices/example-sim-r480.yaml
+docker compose run --rm --service-ports esphome run devices/example-sim-r240.yaml
+```
+
+| Input | Simulates |
+|---|---|
+| Mouse | touchscreen |
+| ← / → | knob turn |
+| Space | knob button |
+| F12 | screenshot, saved to `build/snapshots/<device>/` |
+
 ## Repository layout
 
 | Folder | Contents |

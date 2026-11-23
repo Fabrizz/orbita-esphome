@@ -1,0 +1,13 @@
+# English strings: the master language. Every other language defines exactly
+# the same keys.
+
+substitutions:
+  i18n_lang: en
+  # Characters compiled into text fonts.
+  i18n_glyphset: GF_Latin_Core
+
+  t_product: "Orbita"
+
+  # Placeholder start screen (removed with the HOME face).
+  t_placeholder_hint: "Shell skeleton"
+  t_demo_value: "21°"

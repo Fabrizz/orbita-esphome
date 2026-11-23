@@ -1,0 +1,21 @@
+# The shell: C++ owner of all UI state, plus the LVGL root it drives.
+#
+# Board capability flags (`has_knob`, `has_touch`, `motion_default`) come from
+# the board file.
+
+external_components:
+  - source:
+      type: local
+      # Local paths resolve against the folder of the device file being built,
+      # so this works for device files in devices/.
+      path: ../core/components
+    components: [knob_shell]
+
+knob_shell:
+  id: shell
+  has_knob: ${has_knob}
+  has_touch: ${has_touch}
+  motion_default: ${motion_default}
+
+lvgl:
+  default_font: f_m

@@ -1,0 +1,8 @@
+# Everything every device needs above the board: base, styles, shell and the
+# system screens.
+
+packages:
+  base: !include base.yaml
+  styles: !include styles.yaml
+  shell: !include shell.yaml
+  placeholder: !include system_faces/placeholder.yaml

@@ -1,0 +1,61 @@
+# Size profile for 480 px round displays: every pixel value used above the
+# board layer. Font families come from the theme (`font_text`, `font_num`),
+# glyph coverage of text fonts from the language (`i18n_glyphset`).
+
+substitutions:
+  size_profile: r480
+  disp_d: "480"
+  safe_inset: "70"        # keeps content inside the circle
+
+  # Spacing scale
+  sp_xs: "4"
+  sp_s: "8"
+  sp_m: "12"
+  sp_l: "20"
+  sp_xl: "32"
+
+  # Shapes and lines
+  rad_s: "8"
+  rad_m: "16"
+  line_w: "2"
+  focus_w: "3"
+  arc_w: "16"
+  ring_d: "440"
+
+  # Icons
+  icon_s: "32"
+  icon_m: "48"
+  icon_l: "72"
+
+  # Position indicator dots along the bottom curve
+  nav_r: "218"
+  nav_dot: "8"
+  nav_step_deg: "7"
+  nav_band: "40"
+
+font:
+  # Big values and the clock: digits and a few symbols only.
+  - id: f_xl
+    file: ${font_num}
+    size: 72
+    bpp: 4
+    glyphs: "0123456789:.,-+%° "
+  - id: f_l
+    file: ${font_text}
+    size: 40
+    bpp: 4
+    glyphsets: ["${i18n_glyphset}"]
+    ignore_missing_glyphs: true   # e.g. combining marks some fonts lack
+  - id: f_m
+    file: ${font_text}
+    size: 28
+    bpp: 4
+    glyphsets: ["${i18n_glyphset}"]
+    ignore_missing_glyphs: true   # e.g. combining marks some fonts lack
+  # Smallest legible text on this profile.
+  - id: f_s
+    file: ${font_text}
+    size: 20
+    bpp: 4
+    glyphsets: ["${i18n_glyphset}"]
+    ignore_missing_glyphs: true   # e.g. combining marks some fonts lack

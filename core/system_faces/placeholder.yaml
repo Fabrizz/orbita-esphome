@@ -1,0 +1,53 @@
+# Temporary start screen: shows the theme and every profile font on the round
+# display. Replaced by the HOME face.
+
+lvgl:
+  pages:
+    - id: scr_placeholder
+      styles: st_bg
+      scrollable: false
+      widgets:
+        - arc:
+            id: ph_ring
+            align: center
+            width: ${ring_d}
+            height: ${ring_d}
+            start_angle: 135
+            end_angle: 45
+            value: 60
+            adjustable: false
+            clickable: false
+            styles: st_track
+            indicator:
+              styles: st_indicator
+            knob:
+              bg_opa: transp
+        - obj:
+            align: center
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            bg_opa: transp
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            layout:
+              type: flex
+              pad_row: ${sp_s}
+              flex_flow: column
+              flex_align_main: center
+              flex_align_cross: center
+              flex_align_track: center
+            widgets:
+              - label:
+                  text: "${t_product}"
+                  text_font: f_l
+                  styles: st_accent
+              - label:
+                  text: "${t_demo_value}"
+                  text_font: f_xl
+                  styles: st_text
+              - label:
+                  text: "${t_placeholder_hint}"
+                  text_font: f_s
+                  styles: st_text_dim
