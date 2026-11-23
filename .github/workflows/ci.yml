@@ -28,3 +28,23 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       esphome: pinned
+
+  # One stable result for branch rules: green only if every job above passed
+  # (build job names change as example devices are added).
+  ci-passed:
+    name: CI passed
+    if: always()
+    needs: [checks, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All CI jobs passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A CI job did not pass ($result)."
+              exit 1
+            fi
+          done
