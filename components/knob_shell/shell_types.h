@@ -41,6 +41,10 @@ enum class Screen : uint8_t {
 
 constexpr size_t SCREEN_COUNT = static_cast<size_t>(Screen::APP) + 1;
 
+// Kinds of items on the strip, left to right:
+// [notifications] [active cards...] [HOME] [apps...] [INFO]
+enum class StripKind : uint8_t { NOTIFICATIONS, CARD, HOME, APP, INFO };
+
 const char *to_str(Connection value);
 const char *to_str(Attention value);
 const char *to_str(Overlay value);

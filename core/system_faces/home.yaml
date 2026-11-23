@@ -1,0 +1,55 @@
+# HOME: the anchor of the strip, where the device rests. For now a basic
+# clock (24 h). The time comes from Home Assistant (SNTP or an RTC where the
+# board has one); "--:--" until it has been set.
+
+knob_shell:
+  screens:
+    home:
+      page: scr_home
+      on_enter:
+        - script.execute: home_render
+
+# Redraw only when the minute changes, and only while HOME is showing.
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_minute = -1;
+              if (id(shell).get_screen() != knob_shell::Screen::HOME)
+                return false;
+              auto now = id(ha_time).now();
+              int minute = now.is_valid() ? now.hour * 60 + now.minute : -1;
+              if (minute == last_minute)
+                return false;
+              last_minute = minute;
+              return true;
+          then:
+            - script.execute: home_render
+
+script:
+  - id: home_render
+    then:
+      - lvgl.label.update:
+          id: home_clock
+          text: !lambda |-
+            auto now = id(ha_time).now();
+            if (!now.is_valid())
+              return std::string("--:--");
+            char buf[8];
+            now.strftime(buf, sizeof(buf), "%H:%M");
+            return std::string(buf);
+
+lvgl:
+  pages:
+    - id: scr_home
+      styles: st_bg
+      scrollable: false
+      widgets:
+        - label:
+            id: home_clock
+            align: center
+            text: "--:--"
+            text_font: f_xl
+            styles: st_text

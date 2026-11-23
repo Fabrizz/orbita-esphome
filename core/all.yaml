@@ -9,4 +9,5 @@ packages:
   shell: !include shell.yaml
   boot: !include system_faces/boot.yaml
   connection: !include system_faces/connection.yaml
-  placeholder: !include system_faces/placeholder.yaml
+  home: !include system_faces/home.yaml
+  info: !include system_faces/info.yaml

@@ -23,6 +23,11 @@ substitutions:
   # printf format: the time the connection was lost (e.g. 14:32).
   t_conn_lost_since: "Retrying since %s"
 
-  # Placeholder start screen (removed with the HOME face).
-  t_placeholder_hint: "Shell skeleton"
-  t_demo_value: "21°"
+  # Info card. printf format: the ESPHome version.
+  t_info_esphome: "ESPHome %s"
+
+  # Faces: shared state words.
+  t_on: "On"
+  t_off: "Off"
+  t_unavailable: "Unavailable"
+  t_loading: "Loading…"

@@ -12,3 +12,17 @@ packages:
   theme: !include ../themes/dark.yaml
   icons: !include ../icons/mdi.yaml
   core: !include ../core/all.yaml
+
+  # Faces on the strip, right of HOME: logic (entity, order) + skin (look).
+  lamp_logic: !include
+    file: ../faces/switch/logic.yaml
+    vars: { fid: lamp, entity: switch.living_room_lamp, order: 1 }
+  lamp_skin: !include
+    file: ../faces/switch/skins/basic.yaml
+    vars: { fid: lamp, title: Living room, icon: "${ic_light}" }
+  coffee_logic: !include
+    file: ../faces/switch/logic.yaml
+    vars: { fid: coffee, entity: switch.coffee_maker, order: 2 }
+  coffee_skin: !include
+    file: ../faces/switch/skins/basic.yaml
+    vars: { fid: coffee, title: Coffee maker }

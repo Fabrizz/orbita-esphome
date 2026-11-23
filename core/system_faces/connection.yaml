@@ -71,26 +71,9 @@ script:
                   return std::string("${t_conn_lost_hint}");
                 snprintf(buf, sizeof(buf), "${t_conn_lost_since}", id(conn_lost_at).c_str());
                 return std::string(buf);
-              default: {
-                // Name and address to add the device by: its IPv4 address, or
-                // <name>.local where the device has no address of its own.
-                std::string address;
-                #ifndef USE_HOST
-                // (The PC simulator has no address of its own.)
-                for (auto &ip : network::get_ip_addresses()) {
-                  if (ip.is_set() && ip.is_ip4()) {
-                    char ip_buf[network::IP_ADDRESS_BUFFER_SIZE];
-                    address = ip.str_to(ip_buf);
-                    break;
-                  }
-                }
-                #endif
-                if (address.empty()) {
-                  char name_buf[network::USE_ADDRESS_BUFFER_SIZE];
-                  address = network::get_use_address_to(name_buf);
-                }
-                return std::string(App.get_friendly_name().c_str()) + "\n" + address;
-              }
+              default:
+                // Name and address to add the device by.
+                return std::string(App.get_friendly_name().c_str()) + "\n" + knob_shell::device_address();
             }
 
 lvgl:

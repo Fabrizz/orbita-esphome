@@ -21,6 +21,7 @@ substitutions:
   line_w: "2"
   focus_w: "3"
   arc_w: "16"
+  face_btn_d: "192"      # round main button of a face (40% of disp_d)
   ring_d: "440"
 
   # Icons

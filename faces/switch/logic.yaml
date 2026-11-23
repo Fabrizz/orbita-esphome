@@ -1,0 +1,90 @@
+# Switch face, logic: one Home Assistant entity that turns on and off (switch,
+# light, fan, input_boolean... anything `homeassistant.toggle` handles).
+#
+# A device adds a switch face with the logic and one skin, same `fid`:
+#
+#   lamp_logic: !include
+#     file: ../faces/switch/logic.yaml
+#     vars: { fid: lamp, entity: switch.living_room_lamp, order: 1 }
+#   lamp_skin: !include
+#     file: ../faces/switch/skins/basic.yaml
+#     vars: { fid: lamp, title: Lamp }
+#
+# vars:      fid (unique face id), entity, order (strip position, default 1)
+# State:     ${fid}_state  -1 loading, 0 off, 1 on, 2 unavailable
+#            ${fid}_sync   a toggle was sent and Home Assistant hasn't confirmed it
+# Actions:   script ${fid}_toggle (knob press, or a tap in the skin)
+# Calls the skin's ${fid}_render after every change.
+#
+# Toggling needs "Allow the device to perform Home Assistant actions" turned
+# on for this device in Home Assistant.
+
+defaults:
+  order: "1"
+
+knob_shell:
+  apps:
+    - face: ${fid}
+      order: ${order}
+      requires_ha: true
+      on_press:
+        - script.execute: ${fid}_toggle
+
+esphome:
+  on_boot:
+    # Syncing waits for the entity's first state.
+    - lambda: id(shell).add_sync_check([]() { return id(${fid}_ha).has_state(); });
+
+globals:
+  - id: ${fid}_state
+    type: int
+    initial_value: "-1"
+  - id: ${fid}_sync
+    type: bool
+    initial_value: "false"
+
+text_sensor:
+  - platform: homeassistant
+    id: ${fid}_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          id(${fid}_state) = x == "on" ? 1 : x == "off" ? 0 : 2;
+          id(${fid}_sync) = false;
+      - script.stop: ${fid}_settle
+      - script.execute: ${fid}_render
+
+script:
+  # Flip at once (optimistic), then ask Home Assistant to do the same.
+  - id: ${fid}_toggle
+    then:
+      - if:
+          condition:
+            lambda: return id(${fid}_state) == 0 || id(${fid}_state) == 1;
+          then:
+            - lambda: |-
+                id(${fid}_state) = 1 - id(${fid}_state);
+                id(${fid}_sync) = true;
+            - script.execute: ${fid}_render
+            - homeassistant.action:
+                action: homeassistant.toggle
+                data:
+                  entity_id: ${entity}
+            - script.execute: ${fid}_settle
+
+  # Home Assistant answers with the new state. If it hasn't after 3 s, show
+  # its last state again.
+  - id: ${fid}_settle
+    mode: restart
+    then:
+      - delay: 3s
+      - if:
+          condition:
+            lambda: return id(${fid}_sync);
+          then:
+            - lambda: |-
+                const std::string &x = id(${fid}_ha).state;
+                id(${fid}_state) = x == "on" ? 1 : x == "off" ? 0 : 2;
+                id(${fid}_sync) = false;
+            - script.execute: ${fid}_render

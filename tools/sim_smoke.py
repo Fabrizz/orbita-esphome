@@ -5,15 +5,25 @@ Compiles DEVICE (a host-sdl device file in devices/), runs the program and fails
 if it exits early or never finishes setup(). With --snapshot it also saves a
 screenshot of the screen to the snapshot folder.
 
-With --fake-ha it also plays Home Assistant over the native API: connect and
-subscribe, disconnect, reconnect. The device gets one Home Assistant entity
-the shell waits for while syncing; the fake sends its state 1.5 s late, so the
-syncing stage is visible. It fails unless the shell goes through the expected
-connection stages and screens, and saves a snapshot of every screen and stage
-the shell settles on (scr-<N>-<SCREEN>-<STAGE>.bmp, numbered in order).
+With --fake-ha it also plays Home Assistant over the native API and checks the
+shell end to end:
 
-Snapshots from an earlier run with the same names are deleted first: the
-simulator never overwrites a snapshot file.
+- Connection gate: connect and subscribe, disconnect, reconnect. The device
+  gets one extra Home Assistant entity the shell waits for while syncing; the
+  fake sends its state 1.5 s late, so the syncing stage is visible.
+- Entities: every entity the device asks for gets a state ("off" for faces),
+  and `homeassistant.toggle` calls flip it and send the new state back, like
+  Home Assistant would.
+- Strip: the device's strip (from its log) is walked to the right end and
+  back with knob turns; the first app face gets a knob press, which must
+  reach Home Assistant as a toggle. A lost connection must come back to the
+  same strip item.
+
+Knob input goes through test-only API actions that call the shell like the
+board does. Snapshots: scr-<N>-<VIEW>-<STAGE>.bmp for every screen and stage
+the shell settles on, plus step-<name>.bmp at chosen moments. Snapshots from an
+earlier run with the same names are deleted first: the simulator never
+overwrites a snapshot file.
 
 Needs a display: run it inside the dev container (WSLg on Windows) or under
 `xvfb-run` on a headless machine:
@@ -40,23 +50,22 @@ API_PORT = 6053
 # Home Assistant entity the test device waits for while syncing.
 SYNC_ENTITY = "sensor.orbita_sim_test"
 SYNC_DELAY = 1.5
-# What the shell must log, in this order, during the --fake-ha scenario.
+# Time for a screen to settle and its snapshot (taken after 900 ms) to be written.
+SETTLE = 1.2
+# The connection gate: what the shell must log, in this order.
 FAKE_HA_EXPECTED = [
     "Connection: BOOTING -> CONNECTING",
     "Screen: BOOT",
     "Screen: BOOT -> CONNECTION",
     "Connection: CONNECTING -> SYNCING",
-    "Sync: 0 of 1",
-    "Sync: 1 of 1",
     "Connection: SYNCING -> READY",
     "Screen: CONNECTION -> HOME",
     "Connection: READY -> LOST",
-    "Screen: HOME -> CONNECTION",
     "Connection: LOST -> SYNCING",
     "Connection: SYNCING -> READY",
-    "Screen: CONNECTION -> HOME",
 ]
 PROGRAM_PATH = re.compile(r"Successfully compiled program to path '([^']+)'")
+STRIP_LINE = re.compile(r"Strip: ([^\x1b\r\n]+)")
 
 
 def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha: bool) -> Path:
@@ -76,10 +85,8 @@ def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha
             f"      - snapshot.take: {{ filename: {snapshot_name} }}",
         ]
     if fake_ha:
-        # One snapshot per screen + stage the shell settles on: 900 ms after a
-        # change (the boot intro is over by then), if nothing changed since
-        # and it isn't the same as the previous snapshot.
         lines += [
+            # An entity the shell waits for while syncing.
             "sensor:",
             "  - platform: homeassistant",
             "    id: smoke_sync_entity",
@@ -88,11 +95,33 @@ def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha
             "esphome:",
             "  on_boot:",
             "    - lambda: id(shell).add_sync_check([]() { return id(smoke_sync_entity).has_state(); });",
+            # Test input: the same calls the board makes for the knob.
+            "api:",
+            "  actions:",
+            "    - action: smoke_knob",
+            "      variables:",
+            "        steps: int",
+            "      then:",
+            "        - lambda: id(shell).knob_delta(steps);",
+            "    - action: smoke_press",
+            "      then:",
+            "        - lambda: |-",
+            "            id(shell).knob_button(true);",
+            "            id(shell).knob_button(false);",
+            "    - action: smoke_snapshot",
+            "      variables:",
+            "        name: string",
+            "      then:",
+            "        - snapshot.take:",
+            "            filename: !lambda return \"step-\" + name + \".bmp\";",
+            # One snapshot per screen + stage the shell settles on: 900 ms after
+            # a change (the boot intro is over by then), if nothing changed
+            # since and it isn't the same as the previous snapshot.
             "script:",
-            "  - id: smoke_snapshot",
+            "  - id: smoke_settled",
             "    mode: parallel",
             "    parameters:",
-            "      screen: int",
+            "      view: string",
             "      stage: int",
             "    then:",
             "      - delay: 900ms",
@@ -100,10 +129,9 @@ def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha
             "          condition:",
             "            lambda: |-",
             "              static std::string last;",
-            "              if (static_cast<int>(id(shell).get_screen()) != screen ||",
-            "                  static_cast<int>(id(shell).get_connection()) != stage)",
+            "              if (id(shell).view_str() != view || static_cast<int>(id(shell).get_connection()) != stage)",
             "                return false;",
-            "              std::string key = std::string(id(shell).screen_str()) + \"-\" + id(shell).connection_str();",
+            "              std::string key = view + \"-\" + id(shell).connection_str();",
             "              if (key == last)",
             "                return false;",
             "              last = key;",
@@ -112,25 +140,22 @@ def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha
             "            - snapshot.take:",
             "                filename: !lambda |-",
             "                  static int count = 0;",
-            "                  return \"scr-\" + std::to_string(++count) + \"-\" + id(shell).screen_str() + \"-\"",
-            "                      + id(shell).connection_str() + \".bmp\";",
+            "                  std::string shown = id(shell).screen_str();",
+            "                  if (*id(shell).app_id())",
+            "                    shown += std::string(\"-\") + id(shell).app_id();",
+            "                  return \"scr-\" + std::to_string(++count) + \"-\" + shown + \"-\" + id(shell).connection_str() + \".bmp\";",
             "knob_shell:",
             "  on_connection_change:",
             "    - script.execute:",
-            "        id: smoke_snapshot",
-            "        screen: !lambda return static_cast<int>(id(shell).get_screen());",
+            "        id: smoke_settled",
+            "        view: !lambda return id(shell).view_str();",
             "        stage: !lambda return static_cast<int>(stage);",
-            "  screens:",
+            "  on_screen_change:",
+            "    - script.execute:",
+            "        id: smoke_settled",
+            "        view: !lambda return id(shell).view_str();",
+            "        stage: !lambda return static_cast<int>(id(shell).get_connection());",
         ]
-        for name in ("boot", "connection", "home"):
-            lines += [
-                f"    {name}:",
-                "      on_enter:",
-                "        - script.execute:",
-                "            id: smoke_snapshot",
-                "            screen: !lambda return static_cast<int>(id(shell).get_screen());",
-                "            stage: !lambda return static_cast<int>(id(shell).get_connection());",
-            ]
     fd, name = tempfile.mkstemp(prefix=".smoke-", suffix=".yaml", dir=device.parent)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -180,40 +205,130 @@ def api_key(device: Path) -> str:
     return secrets["api_encryption_key"]
 
 
-async def fake_ha(log: Log, key: str) -> None:
-    """Connect, drop and reconnect like Home Assistant would."""
-    from aioesphomeapi import APIClient  # ESPHome's dependency; only needed here
+class FakeHA:
+    """Just enough of Home Assistant: states for the device's entities, and
+    toggle calls answered with the new state."""
 
-    async def connect(send_entity: bool) -> APIClient:
-        client = APIClient("127.0.0.1", API_PORT, noise_psk=key, client_info="orbita-sim-test")
+    def __init__(self, key: str) -> None:
+        self.key = key
+        self.states: dict[str, str] = {}
+        self.toggled: list[str] = []
+        self.client = None
+        self.actions = {}
+
+    async def connect(self, delay_sync: bool) -> None:
+        from aioesphomeapi import APIClient  # ESPHome's dependency; only needed here
+
+        client = APIClient("127.0.0.1", API_PORT, noise_psk=self.key, client_info="orbita-sim-test")
         await client.connect(login=True)
-        client.subscribe_states(lambda state: None)
         requested: list[str] = []
-        client.subscribe_home_assistant_states(lambda entity_id, attribute: requested.append(entity_id))
-        if send_entity:
-            await asyncio.sleep(SYNC_DELAY)  # the syncing stage, waiting for the entity
-            if SYNC_ENTITY not in requested:
-                raise RuntimeError(f"the device never asked for {SYNC_ENTITY} (asked for {requested})")
-            client.send_home_assistant_state(SYNC_ENTITY, None, "21.5")
-        return client
 
+        def on_action(call) -> None:
+            entity = call.data.get("entity_id", "")
+            if call.service == "homeassistant.toggle" and entity in self.states:
+                self.toggled.append(entity)
+                self.states[entity] = "off" if self.states[entity] == "on" else "on"
+                client.send_home_assistant_state(entity, None, self.states[entity])
+
+        client.subscribe_home_assistant_states_and_services(
+            on_state=lambda state: None,
+            on_service_call=on_action,
+            on_state_sub=lambda entity_id, attribute: requested.append(entity_id),
+        )
+        await asyncio.sleep(0.3)  # the device asks for its entities right after subscribing
+        for entity in requested:
+            if entity != SYNC_ENTITY:
+                client.send_home_assistant_state(entity, None, self.states.setdefault(entity, "off"))
+        if delay_sync:
+            await asyncio.sleep(SYNC_DELAY)  # the syncing stage, waiting for the last entity
+        if SYNC_ENTITY not in requested:
+            raise RuntimeError(f"the device never asked for {SYNC_ENTITY} (asked for {requested})")
+        client.send_home_assistant_state(SYNC_ENTITY, None, "21.5")
+        _, services = await client.list_entities_services()
+        self.actions = {service.name: service for service in services}
+        self.client = client
+
+    async def disconnect(self) -> None:
+        await self.client.disconnect()
+
+    async def run(self, action: str, **data) -> None:
+        await self.client.execute_service(self.actions[action], data)
+
+
+async def fake_ha(log: Log, key: str) -> None:
+    """The --fake-ha scenario (see the module docstring)."""
+    ha = FakeHA(key)
+
+    async def knob(steps: int) -> None:
+        await ha.run("smoke_knob", steps=steps)
+
+    async def snapshot(name: str) -> None:
+        await ha.run("smoke_snapshot", name=name)
+        await asyncio.sleep(0.3)
+
+    match = STRIP_LINE.search(log.text())
+    if not match:
+        raise RuntimeError("the shell logged no 'Strip:' line")
+    strip = match.group(1).split()
+    if "HOME" not in strip:
+        raise RuntimeError(f"no HOME on the strip: {strip}")
+    home = strip.index("HOME")
+
+    # Connection gate, first time.
     await log.wait_for("Screen: BOOT -> CONNECTION")
     await asyncio.sleep(2)  # the connection screen, waiting for Home Assistant
-    client = await connect(send_entity=True)
-    info = await client.device_info()
+    await ha.connect(delay_sync=True)
+    info = await ha.client.device_info()
     print(
         f"device info: project {info.project_name!r} {info.project_version!r}, "
         f"model {info.model!r}, manufacturer {info.manufacturer!r}"
     )
-    await log.wait_for("Connection: SYNCING -> READY")
+    await log.wait_for("Screen: CONNECTION -> HOME")
+    await asyncio.sleep(SETTLE)
+
+    # Walk right to the end of the strip, pressing on the first app.
+    pos = home
+    pressed = False
+    while pos + 1 < len(strip):
+        await knob(1)
+        await log.wait_for(f"Screen: {strip[pos]} -> {strip[pos + 1]}")
+        pos += 1
+        await asyncio.sleep(SETTLE)
+        if not pressed and strip[pos].startswith("APP("):
+            pressed = True
+            await ha.run("smoke_press")
+            deadline = time.monotonic() + 5
+            while not ha.toggled:
+                if time.monotonic() > deadline:
+                    raise TimeoutError(f"a press on {strip[pos]} sent no homeassistant.toggle")
+                await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
+            await snapshot(f"pressed-{strip[pos][4:-1]}")
+
+    # At the end the strip doesn't move.
+    screens = log.text().count("Screen: ")
+    await knob(1)
+    await asyncio.sleep(1)
+    if log.text().count("Screen: ") != screens:
+        raise RuntimeError(f"turning past the end of the strip left {strip[pos]}")
+
+    # A lost connection comes back to the same item.
+    await ha.disconnect()
+    await log.wait_for(f"Screen: {strip[pos]} -> CONNECTION")
     await asyncio.sleep(2)
-    await client.disconnect()
-    await log.wait_for("Connection: READY -> LOST")
-    await asyncio.sleep(2)
-    client = await connect(send_entity=False)  # the entity already has a state
-    await log.wait_for("Connection: SYNCING -> READY", count=2)
-    await asyncio.sleep(2)
-    await client.disconnect()
+    await ha.connect(delay_sync=False)
+    await log.wait_for(f"Screen: CONNECTION -> {strip[pos]}")
+    await asyncio.sleep(SETTLE)
+
+    # Walk back to HOME.
+    while pos > home:
+        await knob(-1)
+        await log.wait_for(f"Screen: {strip[pos]} -> {strip[pos - 1]}")
+        pos -= 1
+        await asyncio.sleep(0.4)
+    await asyncio.sleep(SETTLE)
+    await ha.disconnect()
+    print(f"strip walked: {' '.join(strip)}; toggled: {ha.toggled}")
 
 
 def in_order(text: str, expected: list[str]) -> str | None:
@@ -262,6 +377,7 @@ def run_program(program: Path, seconds: int, scenario=None) -> tuple[bool, bool,
 
         async def run_scenario() -> None:
             await log.wait_for(SETUP_DONE, timeout=30)
+            await log.wait_for("Strip: ", timeout=10)
             await scenario(log)
 
         try:
@@ -299,7 +415,7 @@ def main() -> int:
     parser.add_argument(
         "--fake-ha",
         action="store_true",
-        help="act as Home Assistant (connect, drop, reconnect) and check the shell's connection gate",
+        help="act as Home Assistant and check the connection gate, the strip and the faces",
     )
     args = parser.parse_args()
 
@@ -317,7 +433,10 @@ def main() -> int:
     wrapper = write_wrapper(device, args.snapshot, args.seconds, args.fake_ha)
     try:
         program = compile_program(wrapper)
-        clear_snapshots(program, ([args.snapshot] if args.snapshot else []) + (["scr-*.bmp"] if args.fake_ha else []))
+        patterns = [args.snapshot] if args.snapshot else []
+        if args.fake_ha:
+            patterns += ["scr-*.bmp", "step-*.bmp"]
+        clear_snapshots(program, patterns)
         still_running, setup_done, log, error = run_program(program, args.seconds, scenario)
     finally:
         wrapper.unlink(missing_ok=True)
@@ -337,7 +456,7 @@ def main() -> int:
         if missing:
             print(f"FAIL {args.device}: expected '{missing}' (in this order: {FAKE_HA_EXPECTED})")
             return 1
-        print(f"OK {args.device}: connection gate went through {len(FAKE_HA_EXPECTED)} expected steps")
+        print(f"OK {args.device}: connection gate, strip and faces behaved as expected")
     print(f"OK {args.device}: booted and ran for {args.seconds} s")
     return 0
 

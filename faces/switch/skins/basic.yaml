@@ -1,0 +1,88 @@
+# Switch face, skin "basic": the title, a round button with the icon (lit in
+# the accent color when on) and the state underneath. Tapping the button
+# toggles, like a knob press.
+#
+# vars: fid (same as the logic), title, icon (semantic icon, default power)
+
+defaults:
+  title: ""
+  icon: ${ic_power}
+
+knob_shell:
+  apps:
+    - face: ${fid}
+      page: ${fid}_page
+      on_enter:
+        - script.execute: ${fid}_render
+
+script:
+  - id: ${fid}_render
+    then:
+      - lvgl.label.update:
+          id: ${fid}_icon
+          text_color: !lambda |-
+            switch (id(${fid}_state)) {
+              case 1: return lv_color_hex(${c_accent});
+              case 0: return lv_color_hex(${c_text_off});
+              default: return lv_color_hex(${c_unavailable});
+            }
+      - lvgl.label.update:
+          id: ${fid}_status
+          text: !lambda |-
+            switch (id(${fid}_state)) {
+              case 1: return "${t_on}";
+              case 0: return "${t_off}";
+              case 2: return "${t_unavailable}";
+              default: return "${t_loading}";
+            }
+
+lvgl:
+  pages:
+    - id: ${fid}_page
+      styles: st_bg
+      scrollable: false
+      widgets:
+        - obj:
+            align: center
+            width: ${safe_w}
+            height: SIZE_CONTENT
+            bg_opa: transp
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            layout:
+              type: flex
+              pad_row: ${sp_m}
+              flex_flow: column
+              flex_align_main: center
+              flex_align_cross: center
+              flex_align_track: center
+            widgets:
+              - label:
+                  text: "${title}"
+                  text_font: f_m
+                  styles: st_text
+                  width: 100%
+                  long_mode: dot
+                  text_align: center
+              - button:
+                  id: ${fid}_button
+                  width: ${face_btn_d}
+                  height: ${face_btn_d}
+                  styles: st_surface
+                  radius: CIRCLE
+                  on_click:
+                    - script.execute: ${fid}_toggle
+                  widgets:
+                    - label:
+                        id: ${fid}_icon
+                        align: center
+                        text: "${icon}"
+                        text_font: f_ic_l
+                        text_color: ${c_unavailable}
+              - label:
+                  id: ${fid}_status
+                  text: "${t_loading}"
+                  text_font: f_s
+                  styles: st_text_dim

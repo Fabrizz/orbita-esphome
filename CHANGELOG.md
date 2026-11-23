@@ -18,7 +18,7 @@ Before 1.0.0, a minor release may also break device files; its notes say how to 
 - PC simulator boards (`host-sdl-r480`, `host-sdl-r240`) with a round mask, mouse as touch and
   keyboard as knob.
 - Size profiles `r480` and `r240`, the `dark` theme and shared styles.
-- `knob_shell` component and a placeholder start screen.
+- `knob_shell` component.
 - Example devices for the simulator and for use from GitHub (`devices/example-remote.yaml`).
 - Docker development environment and CI.
 - Connection gate: the shell follows the Home Assistant connection (connecting, syncing,
@@ -35,8 +35,16 @@ Before 1.0.0, a minor release may also break device files; its notes say how to 
   version (`esphome: project:` in `core/version.yaml`).
 - `orbita_fonts`: where the fonts in `fonts/` come from (GitHub release by default, `../fonts`
   in a checkout).
+- The strip: HOME, app faces and INFO side by side; the knob or a swipe moves along it, with a
+  slide (or fade, with reduced motion) and position dots along the bottom curve that fade out
+  after moving. HOME shows a clock; INFO shows the device's name, address and versions.
+- Configurable faces: a face type has a logic and one or more skins in `faces/<type>/`; a
+  device adds an instance with two includes and `vars` (`fid`, `entity`, `title`, `icon`,
+  `order`). App faces register with `knob_shell: apps:`; the knob press goes to the face showing.
+- Switch face (`faces/switch/`, skin `basic`): one Home Assistant entity that turns on and off,
+  toggled with a knob press or a tap. Example devices have two.
 - `tools/sim_smoke.py --fake-ha`: plays Home Assistant against a simulator device and checks
-  the connection gate (used in CI).
+  the connection gate, the strip (walked with knob turns) and a face toggle (used in CI).
 - Icons by semantic name (`${ic_<name>}`) with a Material Design Icons pack (`icons/mdi.yaml`),
   compiled at the profile's icon sizes (`f_ic_s`, `f_ic_m`, `f_ic_l`). Device files include an
   icon pack next to the theme.

@@ -22,3 +22,8 @@ packages:
       - themes/dark.yaml
       - icons/mdi.yaml
       - core/all.yaml
+      # Faces on the strip, right of HOME: logic (entity, order) + skin (look).
+      - path: faces/switch/logic.yaml
+        vars: { fid: lamp, entity: switch.living_room_lamp, order: 1 }
+      - path: faces/switch/skins/basic.yaml
+        vars: { fid: lamp, title: Living room, icon: "${ic_light}" }

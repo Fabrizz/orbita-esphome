@@ -1,0 +1,78 @@
+# INFO: always the last item on the right of the strip. For now the device's
+# name, its address and the firmware versions. Settings come later.
+
+knob_shell:
+  screens:
+    info:
+      page: scr_info
+      on_enter:
+        - script.execute: info_render
+
+script:
+  - id: info_render
+    then:
+      - lvgl.label.update:
+          id: info_name
+          text: !lambda return std::string(App.get_friendly_name().c_str());
+      - lvgl.label.update:
+          id: info_address
+          text: !lambda return knob_shell::device_address();
+      - lvgl.label.update:
+          id: info_esphome
+          text: !lambda |-
+            char buf[48];
+            snprintf(buf, sizeof(buf), "${t_info_esphome}", ESPHOME_VERSION);
+            return std::string(buf);
+
+lvgl:
+  pages:
+    - id: scr_info
+      styles: st_bg
+      scrollable: false
+      widgets:
+        - obj:
+            align: center
+            width: ${safe_w}
+            height: SIZE_CONTENT
+            bg_opa: transp
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            layout:
+              type: flex
+              pad_row: ${sp_s}
+              flex_flow: column
+              flex_align_main: center
+              flex_align_cross: center
+              flex_align_track: center
+            widgets:
+              - label:
+                  text: "${ic_info}"
+                  text_font: f_ic_m
+                  styles: st_accent
+              - label:
+                  id: info_name
+                  text: ""
+                  text_font: f_m
+                  styles: st_text
+                  width: 100%
+                  long_mode: wrap
+                  text_align: center
+              - label:
+                  id: info_address
+                  text: ""
+                  text_font: f_s
+                  styles: st_text_dim
+                  width: 100%
+                  long_mode: wrap
+                  text_align: center
+              - label:
+                  text: "${t_product} v${orbita_version}"
+                  text_font: f_s
+                  styles: st_text_dim
+              - label:
+                  id: info_esphome
+                  text: ""
+                  text_font: f_s
+                  styles: st_text_dim
