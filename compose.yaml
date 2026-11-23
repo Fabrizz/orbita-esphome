@@ -15,6 +15,9 @@ services:
       dockerfile: tools/docker/Dockerfile
     image: orbita-esphome:dev
     working_dir: /config
+    # Small init as PID 1: forwards Ctrl+C and reaps child processes (xvfb-run
+    # hangs without it).
+    init: true
     stdin_open: true
     tty: true
     environment:

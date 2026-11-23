@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: ESPHome version pin
+        run: python3 tools/check_version_pin.py
+
+  build:
+    name: Build
+    needs: checks
+    uses: ./.github/workflows/build.yml
+    with:
+      esphome: pinned

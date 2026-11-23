@@ -1,0 +1,23 @@
+# Example device file for your own ESPHome setup (CLI or Device Builder).
+# It doesn't need a copy of this repository: ESPHome downloads the Orbita
+# files from GitHub at the version set in `orbita_ref`.
+#
+# Put it next to your secrets.yaml (see secrets.example.yaml), then:
+#   esphome run example-remote.yaml
+
+substitutions:
+  device_name: knob-example-remote
+  friendly_name: Example knob (remote)
+  # Orbita version: a release tag such as v0.1.0. Used for the YAML packages
+  # below and for the C++ components.
+  orbita_ref: main
+
+packages:
+  orbita:
+    url: https://github.com/Fabrizz/orbita-esphome
+    ref: ${orbita_ref}
+    files:
+      - boards/host-sdl-r480.yaml
+      - i18n/en.yaml
+      - themes/dark.yaml
+      - core/all.yaml

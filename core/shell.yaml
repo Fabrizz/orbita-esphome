@@ -3,12 +3,17 @@
 # Board capability flags (`has_knob`, `has_touch`, `motion_default`) come from
 # the board file.
 
+substitutions:
+  # Where the C++ components come from. By default the same GitHub release as
+  # the YAML packages: a device file only sets `orbita_ref` (the release tag).
+  # Inside a checkout of this repo, device files point it at the local folder
+  # instead (e.g. `orbita_components: ../components`).
+  orbita_repo: Fabrizz/orbita-esphome
+  orbita_ref: main
+  orbita_components: github://${orbita_repo}@${orbita_ref}
+
 external_components:
-  - source:
-      type: local
-      # Local paths resolve against the folder of the device file being built,
-      # so this works for device files in devices/.
-      path: ../core/components
+  - source: ${orbita_components}
     components: [knob_shell]
 
 knob_shell:

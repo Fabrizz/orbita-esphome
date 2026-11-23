@@ -67,6 +67,45 @@ docker compose run --rm --service-ports esphome run devices/example-sim-r240.yam
 | Space | knob button |
 | F12 | screenshot, saved to `build/snapshots/<device>/` |
 
+Boot check (what CI runs): compiles the device, runs it for a few seconds and fails if it
+crashes or never finishes setup; `--snapshot` also saves a screenshot.
+
+```sh
+docker compose run --rm --entrypoint python esphome tools/sim_smoke.py devices/example-sim-r480.yaml --snapshot smoke.bmp
+```
+
+## Continuous integration
+
+- **CI** (every push and pull request): checks the ESPHome version pin, compiles every
+  `devices/example-*.yaml` and boots the simulator ones under a virtual display (Xvfb).
+  Screenshots are attached to the run.
+- **Latest ESPHome** (1st of every month, or run by hand): the same builds with the newest
+  ESPHome release instead of the pinned one, to catch breaking changes early.
+- Both also build `devices/example-remote.yaml` from a folder outside the repo, downloading
+  Orbita from GitHub at the commit being tested, exactly as a user's device file does.
+
+## Using it from your own ESPHome setup
+
+You don't need a copy of this repository: a device file can pull Orbita straight from GitHub,
+pinned to a version. See [`devices/example-remote.yaml`](devices/example-remote.yaml):
+
+```yaml
+substitutions:
+  orbita_ref: v0.1.0              # Orbita version, used for packages and components
+
+packages:
+  orbita:
+    url: https://github.com/Fabrizz/orbita-esphome
+    ref: ${orbita_ref}
+    files:
+      - boards/<board>.yaml
+      - i18n/en.yaml
+      - themes/dark.yaml
+      - core/all.yaml
+```
+
+Builds with an ESPHome older than the supported version stop with a clear "too old" error.
+
 ## Repository layout
 
 | Folder | Contents |
@@ -74,6 +113,7 @@ docker compose run --rm --service-ports esphome run devices/example-sim-r240.yam
 | `boards/` | hardware files, one per board |
 | `profiles/` | sizes and fonts per screen resolution |
 | `core/` | shared firmware core and system screens |
+| `components/` | C++ ESPHome components (the shell) |
 | `faces/` | screens for each Home Assistant entity type |
 | `themes/`, `i18n/`, `icons/` | colors, translations, icon packs |
 | `devices/` | example device configurations |

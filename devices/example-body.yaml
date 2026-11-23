@@ -2,6 +2,10 @@
 # board. Not built on its own; the example-<board>.yaml wrappers include it
 # together with a board.
 
+substitutions:
+  # Build the C++ components from this checkout, not from GitHub.
+  orbita_components: ../components
+
 packages:
   lang: !include ../i18n/en.yaml
   theme: !include ../themes/dark.yaml
