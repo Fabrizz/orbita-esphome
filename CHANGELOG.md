@@ -24,4 +24,4 @@ Before 1.0.0, a minor release may also break device files; its notes say how to 
 - Icons by semantic name (`${ic_<name>}`) with a Material Design Icons pack (`icons/mdi.yaml`),
   compiled at the profile's icon sizes (`f_ic_s`, `f_ic_m`, `f_ic_l`). Device files include an
   icon pack next to the theme.
-- Logo font (`fonts/orbita-mark.ttf`) built from the logo's sections in `brand/`.
+- Brand font (`fonts/orbita-brand.ttf`) built from `brand/`: the logo's sections and the author icon.

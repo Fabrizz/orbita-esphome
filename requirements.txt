@@ -1,4 +1,4 @@
 # Keep in sync with .esphome-version
 esphome==2026.10.2
-# Asset build tools (tools/build_logo_font.py)
+# Asset build tools (tools/build_brand_font.py, tools/build_icons.py)
 fonttools==4.68.0
