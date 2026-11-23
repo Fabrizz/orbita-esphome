@@ -25,8 +25,14 @@ Before 1.0.0, a minor release may also break device files; its notes say how to 
   ready, lost) and shows the connection screen until Home Assistant is ready. Screens register
   their LVGL page with the shell (`knob_shell: screens:`); only the shell switches pages.
   `on_connection_change` runs actions with the new stage. Profiles gain `safe_w`.
+- Connection screen details: the device's name and address while waiting for Home Assistant,
+  "n of m entities" while syncing (faces add checks with `add_sync_check()`; the shell reports
+  `sync_done()` / `sync_total()` and runs `on_sync_progress`), and since when it has been
+  retrying after the connection was lost.
 - Boot screen: the Orbita mark (animated intro that follows the motion setting), the Orbita
   version and a credit line (`boot_credit`). Shown for 5 s after power-on.
+- Home Assistant's device info shows the firmware project `fabrizz.orbita` and the Orbita
+  version (`esphome: project:` in `core/version.yaml`).
 - `orbita_fonts`: where the fonts in `fonts/` come from (GitHub release by default, `../fonts`
   in a checkout).
 - `tools/sim_smoke.py --fake-ha`: plays Home Assistant against a simulator device and checks

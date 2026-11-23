@@ -7,3 +7,9 @@ substitutions:
   # Git ref the C++ components are downloaded from (see core/shell.yaml). In a
   # tagged release this is the release itself. Device files may override it.
   orbita_ref: v${orbita_version}
+
+# Shown in Home Assistant's device info as the firmware project and version.
+esphome:
+  project:
+    name: fabrizz.orbita
+    version: ${orbita_version}

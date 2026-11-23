@@ -13,12 +13,15 @@ substitutions:
 
   # Connection screen.
   t_conn_waiting: "Waiting for Home Assistant"
-  t_conn_waiting_hint: "Add this device in Home Assistant"
   t_conn_syncing: "Syncing"
   t_conn_syncing_hint: "Getting the latest states"
+  # printf format: entities received, entities needed.
+  t_conn_syncing_n: "%d of %d entities"
   t_conn_ready: "Connected"
   t_conn_lost: "Connection lost"
   t_conn_lost_hint: "Reconnecting…"
+  # printf format: the time the connection was lost (e.g. 14:32).
+  t_conn_lost_since: "Retrying since %s"
 
   # Placeholder start screen (removed with the HOME face).
   t_placeholder_hint: "Shell skeleton"

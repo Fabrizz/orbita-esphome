@@ -6,8 +6,10 @@ if it exits early or never finishes setup(). With --snapshot it also saves a
 screenshot of the screen to the snapshot folder.
 
 With --fake-ha it also plays Home Assistant over the native API: connect and
-subscribe, disconnect, reconnect. It fails unless the shell goes through the
-expected connection stages and screens, and saves a snapshot of every screen
+subscribe, disconnect, reconnect. The device gets one Home Assistant entity
+the shell waits for while syncing; the fake sends its state 1.5 s late, so the
+syncing stage is visible. It fails unless the shell goes through the expected
+connection stages and screens, and saves a snapshot of every screen and stage
 the shell settles on (scr-<N>-<SCREEN>-<STAGE>.bmp, numbered in order).
 
 Snapshots from an earlier run with the same names are deleted first: the
@@ -35,12 +37,17 @@ from pathlib import Path
 
 SETUP_DONE = "setup() finished successfully"
 API_PORT = 6053
+# Home Assistant entity the test device waits for while syncing.
+SYNC_ENTITY = "sensor.orbita_sim_test"
+SYNC_DELAY = 1.5
 # What the shell must log, in this order, during the --fake-ha scenario.
 FAKE_HA_EXPECTED = [
     "Connection: BOOTING -> CONNECTING",
     "Screen: BOOT",
     "Screen: BOOT -> CONNECTION",
     "Connection: CONNECTING -> SYNCING",
+    "Sync: 0 of 1",
+    "Sync: 1 of 1",
     "Connection: SYNCING -> READY",
     "Screen: CONNECTION -> HOME",
     "Connection: READY -> LOST",
@@ -69,19 +76,38 @@ def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha
             f"      - snapshot.take: {{ filename: {snapshot_name} }}",
         ]
     if fake_ha:
-        # One snapshot per screen the shell settles on: 900 ms after it is
-        # shown (the boot intro is over by then), if it is still showing.
+        # One snapshot per screen + stage the shell settles on: 900 ms after a
+        # change (the boot intro is over by then), if nothing changed since
+        # and it isn't the same as the previous snapshot.
         lines += [
+            "sensor:",
+            "  - platform: homeassistant",
+            "    id: smoke_sync_entity",
+            f"    entity_id: {SYNC_ENTITY}",
+            "    internal: true",
+            "esphome:",
+            "  on_boot:",
+            "    - lambda: id(shell).add_sync_check([]() { return id(smoke_sync_entity).has_state(); });",
             "script:",
             "  - id: smoke_snapshot",
             "    mode: parallel",
             "    parameters:",
             "      screen: int",
+            "      stage: int",
             "    then:",
             "      - delay: 900ms",
             "      - if:",
             "          condition:",
-            "            lambda: return static_cast<int>(id(shell).get_screen()) == screen;",
+            "            lambda: |-",
+            "              static std::string last;",
+            "              if (static_cast<int>(id(shell).get_screen()) != screen ||",
+            "                  static_cast<int>(id(shell).get_connection()) != stage)",
+            "                return false;",
+            "              std::string key = std::string(id(shell).screen_str()) + \"-\" + id(shell).connection_str();",
+            "              if (key == last)",
+            "                return false;",
+            "              last = key;",
+            "              return true;",
             "          then:",
             "            - snapshot.take:",
             "                filename: !lambda |-",
@@ -89,15 +115,21 @@ def write_wrapper(device: Path, snapshot_name: str | None, seconds: int, fake_ha
             "                  return \"scr-\" + std::to_string(++count) + \"-\" + id(shell).screen_str() + \"-\"",
             "                      + id(shell).connection_str() + \".bmp\";",
             "knob_shell:",
+            "  on_connection_change:",
+            "    - script.execute:",
+            "        id: smoke_snapshot",
+            "        screen: !lambda return static_cast<int>(id(shell).get_screen());",
+            "        stage: !lambda return static_cast<int>(stage);",
             "  screens:",
         ]
-        for name, enum in (("boot", "BOOT"), ("connection", "CONNECTION"), ("home", "HOME")):
+        for name in ("boot", "connection", "home"):
             lines += [
                 f"    {name}:",
                 "      on_enter:",
                 "        - script.execute:",
                 "            id: smoke_snapshot",
-                f"            screen: !lambda return static_cast<int>(knob_shell::Screen::{enum});",
+                "            screen: !lambda return static_cast<int>(id(shell).get_screen());",
+                "            stage: !lambda return static_cast<int>(id(shell).get_connection());",
             ]
     fd, name = tempfile.mkstemp(prefix=".smoke-", suffix=".yaml", dir=device.parent)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -152,21 +184,33 @@ async def fake_ha(log: Log, key: str) -> None:
     """Connect, drop and reconnect like Home Assistant would."""
     from aioesphomeapi import APIClient  # ESPHome's dependency; only needed here
 
-    async def connect() -> APIClient:
+    async def connect(send_entity: bool) -> APIClient:
         client = APIClient("127.0.0.1", API_PORT, noise_psk=key, client_info="orbita-sim-test")
         await client.connect(login=True)
         client.subscribe_states(lambda state: None)
+        requested: list[str] = []
+        client.subscribe_home_assistant_states(lambda entity_id, attribute: requested.append(entity_id))
+        if send_entity:
+            await asyncio.sleep(SYNC_DELAY)  # the syncing stage, waiting for the entity
+            if SYNC_ENTITY not in requested:
+                raise RuntimeError(f"the device never asked for {SYNC_ENTITY} (asked for {requested})")
+            client.send_home_assistant_state(SYNC_ENTITY, None, "21.5")
         return client
 
     await log.wait_for("Screen: BOOT -> CONNECTION")
     await asyncio.sleep(2)  # the connection screen, waiting for Home Assistant
-    client = await connect()
+    client = await connect(send_entity=True)
+    info = await client.device_info()
+    print(
+        f"device info: project {info.project_name!r} {info.project_version!r}, "
+        f"model {info.model!r}, manufacturer {info.manufacturer!r}"
+    )
     await log.wait_for("Connection: SYNCING -> READY")
     await asyncio.sleep(2)
     await client.disconnect()
     await log.wait_for("Connection: READY -> LOST")
     await asyncio.sleep(2)
-    client = await connect()
+    client = await connect(send_entity=False)  # the entity already has a state
     await log.wait_for("Connection: SYNCING -> READY", count=2)
     await asyncio.sleep(2)
     await client.disconnect()

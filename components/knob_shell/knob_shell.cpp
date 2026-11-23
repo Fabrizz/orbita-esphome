@@ -74,12 +74,13 @@ bool KnobShell::ha_connected_() const {
 #endif
 }
 
-bool KnobShell::synced_() const {
+size_t KnobShell::sync_done() const {
+  size_t done = 0;
   for (const auto &check : this->sync_checks_) {
-    if (!check())
-      return false;
+    if (check())
+      done++;
   }
-  return true;
+  return done;
 }
 
 void KnobShell::update_connection_() {
@@ -91,13 +92,23 @@ void KnobShell::update_connection_() {
     case Connection::LOST:
       if (ha) {
         this->sync_start_ = millis();
+        this->last_sync_done_ = SIZE_MAX;
         this->set_connection_(Connection::SYNCING);
       }
       break;
-    case Connection::SYNCING:
+    case Connection::SYNCING: {
       if (!ha) {
         this->set_connection_(this->was_ready_ ? Connection::LOST : Connection::CONNECTING);
-      } else if (this->synced_()) {
+        break;
+      }
+      const size_t done = this->sync_done();
+      if (done != this->last_sync_done_) {
+        this->last_sync_done_ = done;
+        ESP_LOGD(TAG, "Sync: %u of %u", (unsigned) done, (unsigned) this->sync_total());
+        for (auto *trigger : this->sync_progress_triggers_)
+          trigger->trigger();
+      }
+      if (done == this->sync_total()) {
         this->set_connection_(Connection::READY);
       } else if (millis() - this->sync_start_ >= this->sync_timeout_) {
         ESP_LOGW(TAG, "Sync timed out after %" PRIu32 " ms; faces still waiting show unavailable",
@@ -105,6 +116,7 @@ void KnobShell::update_connection_() {
         this->set_connection_(Connection::READY);
       }
       break;
+    }
     case Connection::READY:
       if (!ha)
         this->set_connection_(Connection::LOST);

@@ -19,6 +19,7 @@ CONF_REQUIRES_HA = "requires_ha"
 CONF_ON_ENTER = "on_enter"
 CONF_ON_EXIT = "on_exit"
 CONF_ON_CONNECTION_CHANGE = "on_connection_change"
+CONF_ON_SYNC_PROGRESS = "on_sync_progress"
 
 knob_shell_ns = cg.esphome_ns.namespace("knob_shell")
 KnobShell = knob_shell_ns.class_("KnobShell", cg.Component)
@@ -84,6 +85,8 @@ CONFIG_SCHEMA = cv.Schema(
         ),
         # Actions get the new stage as `stage` (knob_shell::Connection).
         cv.Optional(CONF_ON_CONNECTION_CHANGE): _trigger_schema(Connection),
+        # While SYNCING, whenever sync_done() changes.
+        cv.Optional(CONF_ON_SYNC_PROGRESS): _trigger_schema(),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -117,3 +120,4 @@ async def to_code(config):
         config.get(CONF_ON_CONNECTION_CHANGE, []),
         trigger_args=[(Connection, "stage")],
     )
+    await _add_triggers(var, "add_sync_progress_trigger", config.get(CONF_ON_SYNC_PROGRESS, []))

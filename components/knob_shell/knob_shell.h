@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <vector>
 
@@ -46,6 +47,10 @@ class KnobShell : public Component {
   // SYNCING ends when every check returns true (or after the sync timeout).
   // Faces add a check that their entities have delivered a first state.
   void add_sync_check(std::function<bool()> check) { this->sync_checks_.push_back(std::move(check)); }
+  // Fired while SYNCING whenever the number of passed checks changes.
+  void add_sync_progress_trigger(Trigger<> *trigger) { this->sync_progress_triggers_.push_back(trigger); }
+  size_t sync_total() const { return this->sync_checks_.size(); }
+  size_t sync_done() const;
 
   Connection get_connection() const { return this->connection_; }
   Attention get_attention() const { return this->attention_; }
@@ -70,7 +75,6 @@ class KnobShell : public Component {
   bool has_screen_(Screen screen) const { return this->slot_(screen).page != nullptr; }
 
   bool ha_connected_() const;
-  bool synced_() const;
   void update_connection_();
   void set_connection_(Connection connection);
   Screen decide_() const;
@@ -92,6 +96,8 @@ class KnobShell : public Component {
   std::array<ScreenSlot, SCREEN_COUNT> screens_{};
   std::vector<Trigger<Connection> *> connection_triggers_;
   std::vector<std::function<bool()>> sync_checks_;
+  std::vector<Trigger<> *> sync_progress_triggers_;
+  size_t last_sync_done_{SIZE_MAX};
 
   Connection connection_{Connection::BOOTING};
   Attention attention_{Attention::ACTIVE};

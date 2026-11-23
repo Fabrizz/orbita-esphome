@@ -1,6 +1,10 @@
 # Connection screen: shown by the shell while Home Assistant isn't ready and
 # the screen it would show needs it. One page; the icon and texts follow the
-# shell's connection stage.
+# shell's connection stage:
+#
+#   waiting   the device's name and address, to add it in Home Assistant
+#   syncing   how many of the entities the faces need have arrived
+#   lost      since when, while the device keeps reconnecting
 
 knob_shell:
   screens:
@@ -9,7 +13,24 @@ knob_shell:
       on_enter:
         - script.execute: connection_render
   on_connection_change:
+    - if:
+        condition:
+          lambda: return stage == knob_shell::Connection::LOST;
+        then:
+          - lambda: |-
+              auto now = id(ha_time).now();
+              char buf[8] = "";
+              if (now.is_valid())
+                now.strftime(buf, sizeof(buf), "%H:%M");
+              id(conn_lost_at) = buf;
     - script.execute: connection_render
+  on_sync_progress:
+    - script.execute: connection_render
+
+globals:
+  # Time the connection was lost ("14:32"), empty if the clock wasn't set.
+  - id: conn_lost_at
+    type: std::string
 
 script:
   - id: connection_render
@@ -35,11 +56,41 @@ script:
       - lvgl.label.update:
           id: conn_hint
           text: !lambda |-
+            char buf[96];
             switch (id(shell).get_connection()) {
-              case knob_shell::Connection::SYNCING: return "${t_conn_syncing_hint}";
-              case knob_shell::Connection::READY: return "";
-              case knob_shell::Connection::LOST: return "${t_conn_lost_hint}";
-              default: return "${t_conn_waiting_hint}";
+              case knob_shell::Connection::SYNCING:
+                if (id(shell).sync_total() == 0)
+                  return std::string("${t_conn_syncing_hint}");
+                snprintf(buf, sizeof(buf), "${t_conn_syncing_n}", (int) id(shell).sync_done(),
+                         (int) id(shell).sync_total());
+                return std::string(buf);
+              case knob_shell::Connection::READY:
+                return std::string();
+              case knob_shell::Connection::LOST:
+                if (id(conn_lost_at).empty())
+                  return std::string("${t_conn_lost_hint}");
+                snprintf(buf, sizeof(buf), "${t_conn_lost_since}", id(conn_lost_at).c_str());
+                return std::string(buf);
+              default: {
+                // Name and address to add the device by: its IPv4 address, or
+                // <name>.local where the device has no address of its own.
+                std::string address;
+                #ifndef USE_HOST
+                // (The PC simulator has no address of its own.)
+                for (auto &ip : network::get_ip_addresses()) {
+                  if (ip.is_set() && ip.is_ip4()) {
+                    char ip_buf[network::IP_ADDRESS_BUFFER_SIZE];
+                    address = ip.str_to(ip_buf);
+                    break;
+                  }
+                }
+                #endif
+                if (address.empty()) {
+                  char name_buf[network::USE_ADDRESS_BUFFER_SIZE];
+                  address = network::get_use_address_to(name_buf);
+                }
+                return std::string(App.get_friendly_name().c_str()) + "\n" + address;
+              }
             }
 
 lvgl:
@@ -80,7 +131,7 @@ lvgl:
                   text_align: center
               - label:
                   id: conn_hint
-                  text: "${t_conn_waiting_hint}"
+                  text: ""
                   text_font: f_s
                   styles: st_text_dim
                   width: 100%
