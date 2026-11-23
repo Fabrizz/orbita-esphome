@@ -52,6 +52,74 @@ this PC's IP address. Docker Desktop on Windows can't reach USB serial ports: do
 flash with a native install (`esphome upload --device COM3 <file>`) or the ESPHome web flasher,
 then update over the network.
 
+## Simulator
+
+```sh
+cp devices/secrets.example.yaml devices/secrets.yaml   # once; fill in the API key
+docker compose run --rm --service-ports esphome run devices/example-sim-r480.yaml
+docker compose run --rm --service-ports esphome run devices/example-sim-r240.yaml
+```
+
+| Input | Simulates |
+|---|---|
+| Mouse | touchscreen |
+| ← / → | knob turn |
+| Space | knob button |
+| F12 | screenshot, saved to `build/snapshots/<device>/` |
+
+Boot check (what CI runs): compiles the device, runs it for a few seconds and fails if it
+crashes or never finishes setup; `--snapshot` also saves a screenshot.
+
+```sh
+docker compose run --rm --entrypoint python esphome tools/sim_smoke.py devices/example-sim-r480.yaml --snapshot smoke.bmp
+```
+
+## Continuous integration
+
+- **CI** (every push and pull request): checks the ESPHome version pin, compiles every
+  `devices/example-*.yaml` and boots the simulator ones under a virtual display (Xvfb).
+  Screenshots are attached to the run.
+- **Latest ESPHome** (1st of every month, or run by hand): the same builds with the newest
+  ESPHome release instead of the pinned one, to catch breaking changes early.
+- Both also build `devices/example-remote.yaml` from a folder outside the repo, downloading
+  Orbita from GitHub at the commit being tested, exactly as a user's device file does.
+
+## Using it from your own ESPHome setup
+
+You don't need a copy of this repository: a device file can pull Orbita straight from GitHub,
+pinned to a version. See [`devices/example-remote.yaml`](devices/example-remote.yaml):
+
+```yaml
+substitutions:
+  orbita_ref: v0.1.0              # Orbita version, used for packages and components
+
+packages:
+  orbita:
+    url: https://github.com/Fabrizz/orbita-esphome
+    ref: ${orbita_ref}
+    files:
+      - boards/<board>.yaml
+      - i18n/en.yaml
+      - themes/dark.yaml
+      - core/all.yaml
+```
+
+Builds with an ESPHome older than the supported version stop with a clear "too old" error.
+
+## Branches and releases
+
+| Branch | Contents | Pull requests from |
+|---|---|---|
+| `develop` (default) | ongoing work, may be unstable | feature and fix branches (squash merge) |
+| `main` | released versions only | `release/<version>` and `hotfix/<version>` (merge commit) |
+
+To release, branch `release/x.y.z` from `develop` and set `orbita_version` in
+[`core/version.yaml`](core/version.yaml). Then move the `[Unreleased]` notes in
+[`CHANGELOG.md`](CHANGELOG.md) under `## [x.y.z]` and open a pull request into `main`. Checks
+verify the branch name, version and changelog. Merging tags `vx.y.z`, publishes a GitHub
+Release and opens a pull request merging `main` back into `develop`. Hotfixes do the same from
+`main` with `hotfix/x.y.z`.
+
 ## Repository layout
 
 | Folder | Contents |
@@ -59,6 +127,7 @@ then update over the network.
 | `boards/` | hardware files, one per board |
 | `profiles/` | sizes and fonts per screen resolution |
 | `core/` | shared firmware core and system screens |
+| `components/` | C++ ESPHome components (the shell) |
 | `faces/` | screens for each Home Assistant entity type |
 | `themes/`, `i18n/`, `icons/` | colors, translations, icon packs |
 | `devices/` | example device configurations |

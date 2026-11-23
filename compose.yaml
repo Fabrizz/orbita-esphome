@@ -15,6 +15,9 @@ services:
       dockerfile: tools/docker/Dockerfile
     image: orbita-esphome:dev
     working_dir: /config
+    # Small init as PID 1: forwards Ctrl+C and reaps child processes (xvfb-run
+    # hangs without it).
+    init: true
     stdin_open: true
     tty: true
     environment:
@@ -25,6 +28,8 @@ services:
     volumes:
       - .:/config
       - cache:/cache
+      # Simulator snapshots (F12 / snapshot.take) land in build/snapshots/<device>/.
+      - ./build/snapshots:/cache/esphome/snapshots
       - ${WSLG_DIR:-/run/desktop/mnt/host/wslg}/.X11-unix:/tmp/.X11-unix
       - ${WSLG_DIR:-/run/desktop/mnt/host/wslg}:/mnt/wslg
     ports:

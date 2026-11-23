@@ -1,0 +1,137 @@
+# Compiles every example device and boots the simulator ones.
+# Called by ci.yml (pinned ESPHome) and esphome-latest.yml (newest ESPHome).
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      esphome:
+        description: "'pinned' (requirements.txt) or 'latest'"
+        type: string
+        default: pinned
+
+permissions:
+  contents: read
+
+jobs:
+  devices:
+    name: List example devices
+    runs-on: ubuntu-latest
+    outputs:
+      devices: ${{ steps.list.outputs.devices }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: list
+        name: Find devices/example-*.yaml
+        # *-body files are only included by others; *-remote files download the
+        # repo from GitHub and get their own job below.
+        run: |
+          devices=$(ls devices/example-*.yaml \
+            | grep -v -E -- '-(body|remote)\.yaml$' \
+            | xargs -n1 basename -s .yaml \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Devices: $devices"
+          echo "devices=$devices" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.device }} (${{ inputs.esphome }})
+    needs: devices
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        device: ${{ fromJSON(needs.devices.outputs.devices) }}
+    env:
+      # No WSLg on the runner: the simulator draws into Xvfb instead.
+      WSLG_DIR: /tmp/no-wslg
+      DEVICE_FILE: devices/${{ matrix.device }}.yaml
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build the dev image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: tools/docker/Dockerfile
+          tags: orbita-esphome:dev
+          load: true
+          build-args: ESPHOME_LATEST=${{ inputs.esphome == 'latest' }}
+          cache-from: type=gha,scope=dev-image-${{ inputs.esphome }}
+          cache-to: type=gha,mode=max,scope=dev-image-${{ inputs.esphome }}
+
+      - name: Create throwaway secrets
+        run: |
+          key=$(python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())")
+          sed "s|REPLACE_WITH_BASE64_KEY|$key|" devices/secrets.example.yaml > devices/secrets.yaml
+
+      - name: ESPHome version
+        run: docker compose run --rm -T esphome version
+
+      - name: Compile
+        run: docker compose run --rm -T esphome compile "$DEVICE_FILE"
+
+      - name: Boot in the simulator
+        if: contains(matrix.device, '-sim-')
+        run: >-
+          docker compose run --rm -T --entrypoint xvfb-run esphome -a
+          python tools/sim_smoke.py "$DEVICE_FILE" --seconds 15 --snapshot smoke.bmp
+
+      - name: Upload the snapshot
+        if: always() && contains(matrix.device, '-sim-')
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-${{ matrix.device }}-${{ inputs.esphome }}
+          path: build/snapshots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  remote:
+    name: Remote example (${{ inputs.esphome }})
+    # Builds devices/example-remote.yaml the way users do: from a folder outside
+    # the repo, downloading the packages and components from GitHub at the commit
+    # under test. Pull requests from forks are skipped (their commits are not in
+    # this repository).
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build the dev image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: tools/docker/Dockerfile
+          tags: orbita-esphome:dev
+          load: true
+          build-args: ESPHOME_LATEST=${{ inputs.esphome == 'latest' }}
+          cache-from: type=gha,scope=dev-image-${{ inputs.esphome }}
+
+      - name: Copy the example outside the repo, pinned to this commit
+        run: |
+          dir="$RUNNER_TEMP/user-config"
+          mkdir -p "$dir"
+          # This repository (also in forks) at this commit, for packages and components.
+          sed -e "s|^  orbita_ref: .*|  orbita_ref: $COMMIT\n  orbita_repo: $REPO|" \
+              -e "s|url: https://github.com/.*|url: https://github.com/$REPO|" \
+              devices/example-remote.yaml > "$dir/example-remote.yaml"
+          grep -q "orbita_ref: $COMMIT" "$dir/example-remote.yaml"
+          grep -q "url: https://github.com/$REPO$" "$dir/example-remote.yaml"
+          key=$(python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())")
+          sed "s|REPLACE_WITH_BASE64_KEY|$key|" devices/secrets.example.yaml > "$dir/secrets.yaml"
+          echo "USER_CONFIG=$dir" >> "$GITHUB_ENV"
+
+      - name: Compile and boot
+        run: >-
+          docker run --rm --init
+          -v "$USER_CONFIG:/config" -v "$PWD/tools:/tools:ro" -w /config
+          --entrypoint xvfb-run orbita-esphome:dev -a
+          python /tools/sim_smoke.py example-remote.yaml --seconds 15

@@ -1,0 +1,3 @@
+# Network package for the host (PC) platform. Nothing to configure: the program
+# uses the PC's network, and WiFi, OTA and captive portal don't exist on host.
+{}

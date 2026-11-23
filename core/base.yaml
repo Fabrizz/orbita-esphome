@@ -1,0 +1,23 @@
+# Common to every device, on ESP32 and on the host simulator:
+# device identity, logging, the encrypted Home Assistant API and time.
+#
+# The device file sets `device_name` (knob-<room>) and `friendly_name`.
+
+substitutions:
+  log_level: DEBUG
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.10.2
+
+logger:
+  level: ${log_level}
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+time:
+  - platform: homeassistant
+    id: ha_time

@@ -1,0 +1,11 @@
+# PC simulator with a 240 px round display.
+
+substitutions:
+  # Ring that covers the window corners: inner diameter 240, outer 340
+  # (larger than the 340 px diagonal, rounded up).
+  sim_mask_size: "342"
+  sim_mask_border: "51"
+
+packages:
+  profile: !include ../profiles/r240.yaml
+  sim: !include common/host-sdl.yaml

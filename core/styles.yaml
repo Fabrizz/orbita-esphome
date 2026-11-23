@@ -1,0 +1,57 @@
+# Shared LVGL styles, built from theme tokens (`c_*`, `surface_opa`) and profile
+# tokens (sizes). Themes only define tokens; every theme gets every style here.
+# Skins use these styles first, `${c_*}` tokens only when no style fits, and
+# never raw colors.
+
+lvgl:
+  style_definitions:
+    # Screen background.
+    - id: st_bg
+      bg_color: ${c_bg}
+      bg_opa: cover
+      text_color: ${c_text}
+
+    # Text.
+    - id: st_text
+      text_color: ${c_text}
+    - id: st_text_dim
+      text_color: ${c_text_dim}
+    - id: st_text_off
+      text_color: ${c_text_off}
+    - id: st_accent
+      text_color: ${c_accent}
+
+    # Cards and buttons.
+    - id: st_surface
+      bg_color: ${c_surface}
+      bg_opa: ${surface_opa}
+      border_color: ${c_surface_border}
+      border_width: ${line_w}
+      radius: ${rad_m}
+      text_color: ${c_text}
+    - id: st_pressed
+      bg_color: ${c_surface_hi}
+
+    # Visible selection for knob-only use.
+    - id: st_focus
+      outline_color: ${c_accent}
+      outline_width: ${focus_w}
+      outline_pad: ${sp_xs}
+
+    # Arcs and sliders: inactive track and active indicator.
+    - id: st_track
+      arc_color: ${c_track}
+      arc_width: ${arc_w}
+      arc_rounded: true
+    - id: st_indicator
+      arc_color: ${c_indicator}
+      arc_width: ${arc_w}
+      arc_rounded: true
+
+    # Degraded states.
+    - id: st_unavailable
+      text_color: ${c_unavailable}
+      arc_color: ${c_unavailable}
+    - id: st_pending
+      text_opa: 60%
+      arc_opa: 60%

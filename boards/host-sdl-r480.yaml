@@ -1,0 +1,11 @@
+# PC simulator with a 480 px round display.
+
+substitutions:
+  # Ring that covers the window corners: inner diameter 480, outer 680
+  # (larger than the 679 px diagonal).
+  sim_mask_size: "680"
+  sim_mask_border: "100"
+
+packages:
+  profile: !include ../profiles/r480.yaml
+  sim: !include common/host-sdl.yaml

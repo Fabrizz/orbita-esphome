@@ -1,0 +1,19 @@
+# Monthly early warning: builds and boots every example device with the newest
+# ESPHome release instead of the pinned one. Users build with whatever version
+# their ESPHome Device Builder has, so breaking changes should show up here first.
+name: Latest ESPHome
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"   # 06:00 UTC on the 1st of every month
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yml
+    with:
+      esphome: latest

@@ -1,0 +1,67 @@
+# Every merge into main is a release: tag v<orbita_version>, publish a GitHub
+# Release with the CHANGELOG.md section, then open a pull request that merges
+# main back into develop.
+#
+# Tagging happens here rather than in a separate "on tag" workflow: tags pushed
+# with the workflow token don't start other workflows.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: version
+        name: Read the version
+        run: echo "version=$(python3 tools/release.py version)" >> "$GITHUB_OUTPUT"
+
+      - name: Create the tag and the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          tag="v$VERSION"
+          if [ "$VERSION" = "0.0.0" ]; then
+            echo "Version 0.0.0 is the unreleased placeholder, nothing to release."
+            exit 0
+          fi
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists, nothing to release."
+            exit 0
+          fi
+          python3 tools/release.py notes "$VERSION" > "$RUNNER_TEMP/notes.md"
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file "$RUNNER_TEMP/notes.md"
+
+      - name: Open a pull request to merge main back into develop
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git fetch --quiet origin develop
+          if [ "$(git rev-list --count origin/develop..HEAD)" = "0" ]; then
+            echo "develop already contains main."
+            exit 0
+          fi
+          if [ "$(gh pr list --base develop --head main --state open --json number --jq length)" != "0" ]; then
+            echo "A back-merge pull request is already open."
+            exit 0
+          fi
+          gh pr create --base develop --head main \
+            --title "Merge main (v$VERSION) back into develop" \
+            --body "Brings the release commit of v$VERSION back into develop. Merge with a merge commit (not squash), so both branches keep a shared history. Pull requests opened by workflows don't start CI: close and reopen this one to run it."

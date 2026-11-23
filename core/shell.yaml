@@ -1,0 +1,25 @@
+# The shell: C++ owner of all UI state, plus the LVGL root it drives.
+#
+# Board capability flags (`has_knob`, `has_touch`, `motion_default`) come from
+# the board file.
+
+substitutions:
+  # Where the C++ components come from. By default the same GitHub release as
+  # the YAML packages (`orbita_ref`, see core/version.yaml). Inside a checkout
+  # of this repo, device files point it at the local folder instead
+  # (e.g. `orbita_components: ../components`).
+  orbita_repo: Fabrizz/orbita-esphome
+  orbita_components: github://${orbita_repo}@${orbita_ref}
+
+external_components:
+  - source: ${orbita_components}
+    components: [knob_shell]
+
+knob_shell:
+  id: shell
+  has_knob: ${has_knob}
+  has_touch: ${has_touch}
+  motion_default: ${motion_default}
+
+lvgl:
+  default_font: f_m
