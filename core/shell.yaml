@@ -10,11 +10,16 @@ substitutions:
   # (e.g. `orbita_components: ../components`).
   orbita_repo: Fabrizz/orbita-esphome
   orbita_components: github://${orbita_repo}@${orbita_ref}
+  # Where the fonts in fonts/ come from: the same GitHub release by default.
+  # Inside a checkout, device files use the local folder (`../fonts`).
+  orbita_fonts: https://raw.githubusercontent.com/${orbita_repo}/${orbita_ref}/fonts
 
 external_components:
   - source: ${orbita_components}
     components: [knob_shell]
 
+# Screens (`screens:`) are added by the system face packages: each one maps a
+# screen name to its LVGL page. Only the shell switches pages.
 knob_shell:
   id: shell
   has_knob: ${has_knob}

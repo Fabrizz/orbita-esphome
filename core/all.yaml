@@ -3,7 +3,10 @@
 
 packages:
   version: !include version.yaml
+  brand: !include ../fonts/orbita-brand.yaml
   base: !include base.yaml
   styles: !include styles.yaml
   shell: !include shell.yaml
+  boot: !include system_faces/boot.yaml
+  connection: !include system_faces/connection.yaml
   placeholder: !include system_faces/placeholder.yaml

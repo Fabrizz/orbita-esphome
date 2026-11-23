@@ -1,0 +1,169 @@
+# Boot screen: the first thing on the display after power-on. It stays for
+# `boot_min_time` (5 s), then the shell moves on to where it needs to go.
+#
+# The Orbita mark, the Orbita version under it and a credit line at the bottom.
+# Only the mark moves: its sections fade in from the center outward, each
+# rising into place. With reduced motion they only fade in; with motion off
+# the mark is shown still.
+
+substitutions:
+  # Credit line: "Made by <author icon> <boot_credit>". A name, not translated.
+  boot_credit: "Fabrizz"
+
+knob_shell:
+  boot_min_time: 5s
+  screens:
+    boot:
+      page: scr_boot
+      on_enter:
+        - if:
+            condition:
+              lambda: return id(shell).get_motion() == knob_shell::Motion::FULL;
+            then:
+              - lvgl.animation.start: [boot_intro_1, boot_intro_2, boot_intro_3, boot_intro_4]
+            else:
+              - if:
+                  condition:
+                    lambda: return id(shell).get_motion() == knob_shell::Motion::REDUCED;
+                  then:
+                    - lvgl.animation.start: boot_fade
+                  else:
+                    - lvgl.label.update:
+                        id: [boot_mark_1, boot_mark_2, boot_mark_3, boot_mark_4]
+                        text_opa: COVER
+      on_exit:
+        - lvgl.animation.stop: [boot_intro_1, boot_intro_2, boot_intro_3, boot_intro_4, boot_fade]
+
+lvgl:
+  animations:
+    # Full motion: one animation per section, center first, each starting a
+    # little after the previous one (about 1.1 s in total).
+    - id: boot_intro_1
+      duration: 550ms
+      timing: ease_out
+      widgets:
+        - id: boot_mark_1
+          text_opa: { from: TRANSP, to: COVER }
+          translate_y: { from: "${sp_l}", to: 0 }
+    - id: boot_intro_2
+      duration: 550ms
+      start_delay: 180ms
+      timing: ease_out
+      widgets:
+        - id: boot_mark_2
+          text_opa: { from: TRANSP, to: COVER }
+          translate_y: { from: "${sp_l}", to: 0 }
+    - id: boot_intro_3
+      duration: 550ms
+      start_delay: 360ms
+      timing: ease_out
+      widgets:
+        - id: boot_mark_3
+          text_opa: { from: TRANSP, to: COVER }
+          translate_y: { from: "${sp_l}", to: 0 }
+    - id: boot_intro_4
+      duration: 550ms
+      start_delay: 540ms
+      timing: ease_out
+      widgets:
+        - id: boot_mark_4
+          text_opa: { from: TRANSP, to: COVER }
+          translate_y: { from: "${sp_l}", to: 0 }
+    # Reduced motion: the whole mark fades in at once.
+    - id: boot_fade
+      duration: 650ms
+      timing: ease_in_out
+      widgets:
+        - id: boot_mark_1
+          text_opa: { from: TRANSP, to: COVER }
+        - id: boot_mark_2
+          text_opa: { from: TRANSP, to: COVER }
+        - id: boot_mark_3
+          text_opa: { from: TRANSP, to: COVER }
+        - id: boot_mark_4
+          text_opa: { from: TRANSP, to: COVER }
+
+  pages:
+    - id: scr_boot
+      styles: st_bg
+      scrollable: false
+      widgets:
+        # The mark: all sections at the same position (each glyph covers the
+        # whole mark canvas). They start invisible, so the first frame shows
+        # nothing that the intro then has to replace.
+        - label:
+            id: boot_mark_1
+            align: center
+            y: "-${sp_xl}"
+            text: "${brand_mark_1}"
+            text_font: f_brand_mark
+            styles: st_accent
+            text_opa: TRANSP
+        - label:
+            id: boot_mark_2
+            align: center
+            y: "-${sp_xl}"
+            text: "${brand_mark_2}"
+            text_font: f_brand_mark
+            styles: st_accent
+            text_opa: TRANSP
+        - label:
+            id: boot_mark_3
+            align: center
+            y: "-${sp_xl}"
+            text: "${brand_mark_3}"
+            text_font: f_brand_mark
+            styles: st_accent
+            text_opa: TRANSP
+        - label:
+            id: boot_mark_4
+            align: center
+            y: "-${sp_xl}"
+            text: "${brand_mark_4}"
+            text_font: f_brand_mark
+            styles: st_accent
+            text_opa: TRANSP
+
+        # "Orbita v1.2.3" under the mark.
+        - label:
+            id: boot_version
+            align_to:
+              id: boot_mark_1
+              align: OUT_BOTTOM_MID
+              y: ${sp_l}
+            text: "${t_product} v${orbita_version}"
+            text_font: f_s
+            styles: st_text_dim
+
+        # Credit line at the bottom of the safe area.
+        - obj:
+            align: bottom_mid
+            y: "-${safe_inset}"
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            bg_opa: transp
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            layout:
+              type: flex
+              flex_flow: row
+              pad_column: ${sp_s}
+              flex_align_main: center
+              flex_align_cross: center
+              flex_align_track: center
+            widgets:
+              - label:
+                  text: "${t_made_by}"
+                  text_font: f_s
+                  styles: st_text_dim
+              - label:
+                  text: "${brand_fabrizz}"
+                  text_font: f_brand_s
+                  styles: st_text
+                  translate_y: ${brand_s_dy}
+              - label:
+                  text: "${boot_credit}"
+                  text_font: f_s
+                  styles: st_text

@@ -1,5 +1,12 @@
 # Temporary start screen: shows the theme, every profile font and a few icons
-# on the round display. Replaced by the HOME face.
+# on the round display. Stands in for HOME until the HOME face exists, and
+# needs Home Assistant, so the connection screen shows until it is ready.
+
+knob_shell:
+  screens:
+    home:
+      page: scr_placeholder
+      requires_ha: true
 
 lvgl:
   pages:

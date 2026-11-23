@@ -72,11 +72,11 @@ jobs:
       - name: Compile
         run: docker compose run --rm -T esphome compile "$DEVICE_FILE"
 
-      - name: Boot in the simulator
+      - name: Boot in the simulator and check the connection gate
         if: contains(matrix.device, '-sim-')
         run: >-
           docker compose run --rm -T --entrypoint xvfb-run esphome -a
-          python tools/sim_smoke.py "$DEVICE_FILE" --seconds 15 --snapshot smoke.bmp
+          python tools/sim_smoke.py "$DEVICE_FILE" --seconds 15 --fake-ha --snapshot smoke.bmp
 
       - name: Upload the snapshot
         if: always() && contains(matrix.device, '-sim-')
@@ -134,4 +134,4 @@ jobs:
           docker run --rm --init
           -v "$USER_CONFIG:/config" -v "$PWD/tools:/tools:ro" -w /config
           --entrypoint xvfb-run orbita-esphome:dev -a
-          python /tools/sim_smoke.py example-remote.yaml --seconds 15
+          python /tools/sim_smoke.py example-remote.yaml --seconds 15 --fake-ha

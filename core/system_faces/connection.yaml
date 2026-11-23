@@ -1,0 +1,88 @@
+# Connection screen: shown by the shell while Home Assistant isn't ready and
+# the screen it would show needs it. One page; the icon and texts follow the
+# shell's connection stage.
+
+knob_shell:
+  screens:
+    connection:
+      page: scr_connection
+      on_enter:
+        - script.execute: connection_render
+  on_connection_change:
+    - script.execute: connection_render
+
+script:
+  - id: connection_render
+    then:
+      - lvgl.label.update:
+          id: conn_icon
+          text: !lambda |-
+            switch (id(shell).get_connection()) {
+              case knob_shell::Connection::SYNCING: return "${ic_sync}";
+              case knob_shell::Connection::READY: return "${ic_check}";
+              case knob_shell::Connection::LOST: return "${ic_disconnected}";
+              default: return "${ic_home_assistant}";
+            }
+      - lvgl.label.update:
+          id: conn_title
+          text: !lambda |-
+            switch (id(shell).get_connection()) {
+              case knob_shell::Connection::SYNCING: return "${t_conn_syncing}";
+              case knob_shell::Connection::READY: return "${t_conn_ready}";
+              case knob_shell::Connection::LOST: return "${t_conn_lost}";
+              default: return "${t_conn_waiting}";
+            }
+      - lvgl.label.update:
+          id: conn_hint
+          text: !lambda |-
+            switch (id(shell).get_connection()) {
+              case knob_shell::Connection::SYNCING: return "${t_conn_syncing_hint}";
+              case knob_shell::Connection::READY: return "";
+              case knob_shell::Connection::LOST: return "${t_conn_lost_hint}";
+              default: return "${t_conn_waiting_hint}";
+            }
+
+lvgl:
+  pages:
+    - id: scr_connection
+      styles: st_bg
+      scrollable: false
+      widgets:
+        - obj:
+            align: center
+            width: ${safe_w}
+            height: SIZE_CONTENT
+            bg_opa: transp
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            layout:
+              type: flex
+              pad_row: ${sp_m}
+              flex_flow: column
+              flex_align_main: center
+              flex_align_cross: center
+              flex_align_track: center
+            widgets:
+              - label:
+                  id: conn_icon
+                  text: "${ic_home_assistant}"
+                  text_font: f_ic_l
+                  styles: st_accent
+              - label:
+                  id: conn_title
+                  text: "${t_conn_waiting}"
+                  text_font: f_m
+                  styles: st_text
+                  width: 100%
+                  long_mode: wrap
+                  text_align: center
+              - label:
+                  id: conn_hint
+                  text: "${t_conn_waiting_hint}"
+                  text_font: f_s
+                  styles: st_text_dim
+                  width: 100%
+                  long_mode: wrap
+                  text_align: center

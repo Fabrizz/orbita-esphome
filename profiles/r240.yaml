@@ -6,6 +6,7 @@ substitutions:
   size_profile: r240
   disp_d: "240"
   safe_inset: "35"        # keeps content inside the circle
+  safe_w: "170"           # widest content inside the circle: disp_d - 2 x safe_inset
 
   # Spacing scale
   sp_xs: "2"
@@ -26,6 +27,10 @@ substitutions:
   icon_s: "16"
   icon_m: "24"
   icon_l: "36"
+
+  # Brand glyphs inside a line of text (f_brand_s): moved down by this much so
+  # they center on the lowercase letters, not the capitals.
+  brand_s_dy: "2"
 
   # Position indicator dots along the bottom curve
   nav_r: "109"
@@ -76,3 +81,16 @@ font:
     size: ${icon_l}
     bpp: 4
     glyphs: "${icon_glyphs}"
+  # Brand font (fonts/orbita-brand.yaml): the logo, sized so it spans about
+  # 85% of safe_w (the mark is 3.4 times wider than tall), and the other brand
+  # glyphs at about the cap height of f_s, to sit inside a line of text.
+  - id: f_brand_mark
+    file: ${orbita_fonts}/orbita-brand.ttf
+    size: 42
+    bpp: 4
+    glyphs: "${brand_mark_glyphs}"
+  - id: f_brand_s
+    file: ${orbita_fonts}/orbita-brand.ttf
+    size: 11
+    bpp: 4
+    glyphs: "${brand_other_glyphs}"

@@ -5,6 +5,7 @@
 substitutions:
   # Build the C++ components from this checkout, not from GitHub.
   orbita_components: ../components
+  orbita_fonts: ../fonts
 
 packages:
   lang: !include ../i18n/en.yaml

@@ -8,6 +8,18 @@ substitutions:
 
   t_product: "Orbita"
 
+  # Boot screen: "Made by <author icon> <boot_credit>".
+  t_made_by: "Made by"
+
+  # Connection screen.
+  t_conn_waiting: "Waiting for Home Assistant"
+  t_conn_waiting_hint: "Add this device in Home Assistant"
+  t_conn_syncing: "Syncing"
+  t_conn_syncing_hint: "Getting the latest states"
+  t_conn_ready: "Connected"
+  t_conn_lost: "Connection lost"
+  t_conn_lost_hint: "Reconnecting…"
+
   # Placeholder start screen (removed with the HOME face).
   t_placeholder_hint: "Shell skeleton"
   t_demo_value: "21°"

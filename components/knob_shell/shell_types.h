@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace esphome::knob_shell {
@@ -37,6 +38,8 @@ enum class Screen : uint8_t {
   HUB,
   APP,
 };
+
+constexpr size_t SCREEN_COUNT = static_cast<size_t>(Screen::APP) + 1;
 
 const char *to_str(Connection value);
 const char *to_str(Attention value);
