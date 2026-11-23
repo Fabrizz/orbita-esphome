@@ -8,8 +8,8 @@
 substitutions:
   device_name: knob-example-remote
   friendly_name: Example knob (remote)
-  # Orbita version: a release tag such as v0.1.0. Used for the YAML packages
-  # below and for the C++ components.
+  # Orbita version: a release tag such as v0.1.0 (main is always the latest
+  # release). Used for the YAML packages below and for the C++ components.
   orbita_ref: main
 
 packages:

@@ -1,0 +1,9 @@
+# Orbita version. Changed only by release pull requests (release/x.y.z and
+# hotfix/x.y.z branches into main); every commit on main is the release tagged
+# v<orbita_version>.
+
+substitutions:
+  orbita_version: "0.0.0"
+  # Git ref the C++ components are downloaded from (see core/shell.yaml). In a
+  # tagged release this is the release itself. Device files may override it.
+  orbita_ref: v${orbita_version}

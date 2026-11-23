@@ -5,11 +5,10 @@
 
 substitutions:
   # Where the C++ components come from. By default the same GitHub release as
-  # the YAML packages: a device file only sets `orbita_ref` (the release tag).
-  # Inside a checkout of this repo, device files point it at the local folder
-  # instead (e.g. `orbita_components: ../components`).
+  # the YAML packages (`orbita_ref`, see core/version.yaml). Inside a checkout
+  # of this repo, device files point it at the local folder instead
+  # (e.g. `orbita_components: ../components`).
   orbita_repo: Fabrizz/orbita-esphome
-  orbita_ref: main
   orbita_components: github://${orbita_repo}@${orbita_ref}
 
 external_components:

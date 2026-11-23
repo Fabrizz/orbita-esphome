@@ -106,6 +106,20 @@ packages:
 
 Builds with an ESPHome older than the supported version stop with a clear "too old" error.
 
+## Branches and releases
+
+| Branch | Contents | Pull requests from |
+|---|---|---|
+| `develop` (default) | ongoing work, may be unstable | feature and fix branches (squash merge) |
+| `main` | released versions only | `release/<version>` and `hotfix/<version>` (merge commit) |
+
+To release, branch `release/x.y.z` from `develop` and set `orbita_version` in
+[`core/version.yaml`](core/version.yaml). Then move the `[Unreleased]` notes in
+[`CHANGELOG.md`](CHANGELOG.md) under `## [x.y.z]` and open a pull request into `main`. Checks
+verify the branch name, version and changelog. Merging tags `vx.y.z`, publishes a GitHub
+Release and opens a pull request merging `main` back into `develop`. Hotfixes do the same from
+`main` with `hotfix/x.y.z`.
+
 ## Repository layout
 
 | Folder | Contents |

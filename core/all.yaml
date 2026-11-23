@@ -2,6 +2,7 @@
 # system screens.
 
 packages:
+  version: !include version.yaml
   base: !include base.yaml
   styles: !include styles.yaml
   shell: !include shell.yaml
