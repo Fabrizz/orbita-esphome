@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="685" height="200" viewBox="0 0 685 200">
+  <title>Órbita</title>
+  <ellipse cx="10.53" cy="100" rx="10.45" ry="76.67" fill="#16181D"/>
+  <ellipse cx="66.88" cy="100" rx="30.9" ry="80" fill="#16181D"/>
+  <ellipse cx="170.14" cy="100" rx="57.36" ry="84.72" fill="#16181D"/>
+  <ellipse cx="342.5" cy="100" rx="100" ry="100" fill="#16181D"/>
+  <ellipse cx="514.86" cy="100" rx="57.36" ry="84.72" fill="#16181D"/>
+  <ellipse cx="618.12" cy="100" rx="30.9" ry="80" fill="#16181D"/>
+  <ellipse cx="674.47" cy="100" rx="10.45" ry="76.67" fill="#16181D"/>
+</svg>

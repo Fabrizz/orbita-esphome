@@ -1,12 +1,11 @@
 # --- Private docs -------------------------------------------------------------
-# docs/ is tracked in its own private repository (see docs/CLAUDE.md).
-# Never commit it here.
+# docs/ is tracked in its own private repository. Never commit it here.
 /docs/
 # Root CLAUDE.md only imports @docs/CLAUDE.md; keep it private too.
 /CLAUDE.md
 
 # --- Secrets ------------------------------------------------------------------
-# API keys, OTA passwords, WiFi credentials, initial lock code (09-dev-workflow.md).
+# API keys, OTA passwords, WiFi credentials and the initial lock code.
 secrets.yaml
 **/secrets.yaml
 
@@ -26,8 +25,8 @@ secrets.yaml
 .pio/
 /build/
 
-# --- Fonts with restrictive licenses (downloaded at build time, 08-i18n) ------
-# e.g. Hugeicons free TTF must not be redistributed.
+# --- Fonts whose license forbids redistribution ------------------------------
+# Downloaded at build time, never committed (e.g. the Hugeicons free TTF).
 fonts/.cache/
 *.hugeicons.ttf
 
